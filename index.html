@@ -1,76 +1,351 @@
-<!doctype html><html lang="de"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#111827"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Baustellenzeit">
-<link rel="manifest" href="manifest.json"><title>Baustellenzeit</title>
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Baustellenzeit">
+<link rel="manifest" href="manifest.json">
+<title>Baustellenzeit</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f3f4f6;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.app{max-width:650px;margin:auto;min-height:100vh;padding-bottom:92px}
-header{background:#111827;color:#fff;padding:calc(18px + env(safe-area-inset-top)) 18px 18px}h1{margin:0;font-size:25px}header p{margin:5px 0 0;opacity:.7}main{padding:15px}.card{background:#fff;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 1px 5px #0001}
-label{display:block;font-size:13px;font-weight:700;color:#6b7280;margin:11px 0 6px}input,select,textarea{width:100%;font:inherit;font-size:16px;padding:12px;border:1px solid #d1d5db;border-radius:11px;background:#fff;color:#111827}textarea{min-height:75px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-button{font:inherit;font-size:16px;font-weight:700;border:0;border-radius:12px;padding:13px 15px}.primary{background:#111827;color:#fff;width:100%}.secondary{background:#e5e7eb;color:#111827}.danger{background:#fee2e2;color:#991b1b}.green{background:#dcfce7;color:#166534}.row{display:flex;gap:8px;align-items:center;margin:8px 0}.grow{flex:1}.stat{background:#f9fafb;border-radius:13px;padding:13px}.big{font-size:31px;font-weight:800}.muted{color:#6b7280;font-size:14px}.item{padding:12px 0;border-bottom:1px solid #eee}.item:last-child{border:0}.totalgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.hidden{display:none!important}.badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:700}.badge.done{background:#dcfce7;color:#166534}
-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;padding:7px 10px calc(7px + env(safe-area-inset-bottom));display:flex;gap:7px;z-index:10}nav button{flex:1;background:#f3f4f6;padding:9px 4px;font-size:14px}nav button.active{background:#111827;color:#fff}
-.modal{position:fixed;inset:0;background:#0008;z-index:20;display:flex;align-items:flex-end}.sheet{background:#fff;width:100%;max-width:650px;margin:auto;border-radius:20px 20px 0 0;padding:18px;max-height:90vh;overflow:auto}
+*{box-sizing:border-box}body{margin:0;background:#f3f4f6;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.app{max-width:680px;margin:auto;min-height:100vh;padding-bottom:92px}
+header{background:#111827;color:#fff;padding:calc(18px + env(safe-area-inset-top)) 18px 18px}
+h1{margin:0;font-size:25px}header p{margin:5px 0 0;opacity:.7}
+main{padding:15px}.card{background:#fff;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 1px 5px #0001}
+label{display:block;font-size:13px;font-weight:700;color:#6b7280;margin:11px 0 6px}
+input,select,textarea{width:100%;font:inherit;font-size:16px;padding:12px;border:1px solid #d1d5db;border-radius:11px;background:#fff;color:#111827}
+textarea{min-height:75px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{font:inherit;font-size:16px;font-weight:700;border:0;border-radius:12px;padding:12px 14px;cursor:pointer}
+.primary{background:#111827;color:#fff;width:100%}.secondary{background:#e5e7eb;color:#111827}.danger{background:#fee2e2;color:#991b1b}.green{background:#dcfce7;color:#166534}
+.row{display:flex;gap:8px;align-items:center;margin:8px 0}.grow{flex:1}.stat{background:#f9fafb;border-radius:13px;padding:13px}.big{font-size:30px;font-weight:800}
+.muted{color:#6b7280;font-size:14px}.item{padding:12px 0;border-bottom:1px solid #eee}.item:last-child{border:0}
+.totalgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.hidden{display:none!important}
+.badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:700}.badge.done{background:#dcfce7;color:#166534}
+.actions{display:flex;gap:7px;margin-top:9px}.actions button{flex:1;font-size:14px;padding:9px}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;padding:7px 10px calc(7px + env(safe-area-inset-bottom));display:flex;gap:7px;z-index:10}
+nav button{flex:1;background:#f3f4f6;padding:9px 3px;font-size:13px}nav button.active{background:#111827;color:#fff}
+.modal{position:fixed;inset:0;background:#0008;z-index:20;display:flex;align-items:flex-end}.sheet{background:#fff;width:100%;max-width:680px;margin:auto;border-radius:20px 20px 0 0;padding:18px;max-height:90vh;overflow:auto}
 .checkrow{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #eee}.checkrow input{width:22px;height:22px}.checkrow .name{flex:1}
-@media(min-width:651px){.modal{align-items:center}.sheet{border-radius:20px}}
-</style></head><body><div class="app">
-<header><h1>Baustellenzeit</h1><p>Stunden · Material · Werkzeug · Abrechnung</p></header><main>
-<section id="home"><div class="card"><label>Baustelle</label><div class="row"><select id="projectSelect" class="grow"></select><button class="secondary" id="addProject">＋</button></div></div>
-<div class="totalgrid"><div class="stat"><span class="muted">Gesamtstunden</span><div class="big" id="totalH">0:00 h</div></div><div class="stat"><span class="muted">Noch offen</span><div class="big" id="openH">0:00 h</div></div></div>
-<div style="height:12px"></div><button class="primary" id="newEntry">＋ Arbeitstag erfassen</button>
-<div class="card" style="margin-top:14px"><b>Letzte Einträge</b><div id="recent"></div></div></section>
+.small{font-size:13px}.line-total{font-weight:800}.subtle{background:#f9fafb;padding:10px;border-radius:12px;margin-top:10px}
+@media(min-width:681px){.modal{align-items:center}.sheet{border-radius:20px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><h1>Baustellenzeit</h1><p>Stunden · Material · Werkzeug · Abrechnung</p></header>
+<main>
 
-<section id="entry" class="hidden"><div class="card"><h2 style="margin-top:0">Arbeitstag</h2><label>Datum</label><input id="date" type="date">
+<section id="home">
+<div class="card"><label>Baustelle</label><div class="row"><select id="projectSelect" class="grow"></select><button class="secondary" id="addProject">＋</button></div></div>
+<div class="totalgrid">
+<div class="stat"><span class="muted">Gesamtstunden</span><div class="big" id="totalH">0:00 h</div></div>
+<div class="stat"><span class="muted">Noch offen</span><div class="big" id="openH">0:00 h</div></div>
+</div>
+<div style="height:12px"></div>
+<button class="primary" id="newEntry">＋ Arbeitstag erfassen</button>
+<div class="card" style="margin-top:14px"><b>Letzte Einträge</b><div id="recent"></div></div>
+</section>
+
+<section id="entry" class="hidden">
+<div class="card">
+<h2 id="entryTitle" style="margin-top:0">Arbeitstag</h2>
+<label>Datum</label><input id="date" type="date">
 <div class="grid"><div><label>Beginn</label><input id="start" type="time" value="07:00"></div><div><label>Ende</label><input id="end" type="time" value="15:00"></div></div>
-<label>Pause</label><input id="pause" type="time" value="01:00"><div class="stat" style="margin-top:12px"><span class="muted">Arbeitszeit</span><div id="calc" style="font-size:23px;font-weight:800">7:00 h</div></div>
-<label>Notiz</label><textarea id="note" placeholder="z. B. Mauer abgebrochen"></textarea></div>
-<div class="card"><h3 style="margin-top:0">Material</h3><div id="materials"></div><button class="secondary" id="addMat">＋ Material</button></div>
-<div class="card"><h3 style="margin-top:0">Werkzeug</h3><div id="tools"></div><button class="secondary" id="addTool">＋ Werkzeug</button></div>
-<button class="primary" id="saveEntry">Arbeitstag speichern</button></section>
+<label>Pause</label><input id="pause" type="time" value="01:00">
+<div class="stat" style="margin-top:12px"><span class="muted">Arbeitszeit</span><div id="calc" style="font-size:23px;font-weight:800">7:00 h</div></div>
+<label>Notiz</label><textarea id="note" placeholder="z. B. Mauer abgebrochen"></textarea>
+</div>
 
-<section id="overview" class="hidden"><div class="card"><h2 style="margin-top:0">Übersicht</h2><label>Baustelle</label><select id="ovProject"></select>
+<div class="card"><h3 style="margin-top:0">Material</h3>
+<div id="materials"></div><button class="secondary" id="addMat">＋ Material</button>
+</div>
+
+<div class="card"><h3 style="margin-top:0">Werkzeug</h3>
+<div id="tools"></div><button class="secondary" id="addTool">＋ Werkzeug</button>
+</div>
+
+<button class="primary" id="saveEntry">Arbeitstag speichern</button>
+<button class="secondary" id="cancelEntry" style="width:100%;margin-top:8px">Abbrechen</button>
+</section>
+
+<section id="overview" class="hidden">
+<div class="card"><h2 style="margin-top:0">Übersicht</h2><label>Baustelle</label><select id="ovProject"></select>
 <div class="totalgrid" style="margin-top:12px"><div class="stat"><span class="muted">Gesamt</span><div id="ovTotal" class="big">0:00 h</div></div><div class="stat"><span class="muted">Abgerechnet</span><div id="ovBilled" class="big">0:00 h</div></div></div></div>
-<div class="card"><h3 style="margin-top:0">Arbeitstage</h3><div id="days"></div></div><div class="card"><h3 style="margin-top:0">Material gesamt</h3><div id="matSum"></div></div><div class="card"><h3 style="margin-top:0">Werkzeug</h3><div id="toolSum"></div></div></section>
+<div class="card"><h3 style="margin-top:0">Arbeitstage</h3><div id="days"></div></div>
+<div class="card"><h3 style="margin-top:0">Material gesamt</h3><div id="matSum"></div></div>
+<div class="card"><h3 style="margin-top:0">Werkzeug</h3><div id="toolSum"></div></div>
+</section>
 
-<section id="billing" class="hidden"><div class="card"><h2 style="margin-top:0">Abrechnung</h2><label>Baustelle</label><select id="billProject"></select>
-<div class="totalgrid" style="margin-top:12px"><div class="stat"><span class="muted">Noch offen</span><div id="billOpen" class="big">0:00 h</div></div><div class="stat"><span class="muted">Bereits abgerechnet</span><div id="billDone" class="big">0:00 h</div></div></div>
-<p class="muted">Erstelle eine Abrechnung und wähle genau die Stunden und Materialmengen aus, die du verrechnen möchtest.</p><button class="primary" id="newBill">＋ Abrechnung erstellen</button></div>
-<div class="card"><h3 style="margin-top:0">Abrechnungen</h3><div id="billings"></div></div></section>
+<section id="billing" class="hidden">
+<div class="card"><h2 style="margin-top:0">Abrechnung</h2><label>Baustelle</label><select id="billProject"></select>
+<div class="totalgrid" style="margin-top:12px"><div class="stat"><span class="muted">Stunden offen</span><div id="billOpen" class="big">0:00 h</div></div><div class="stat"><span class="muted">Stunden abgerechnet</span><div id="billDone" class="big">0:00 h</div></div></div>
+<div class="subtle"><b>Material</b><div id="billMatTotals" class="small" style="margin-top:5px"></div></div>
+<p class="muted">Stunden und Material werden unabhängig voneinander abgerechnet. Du kannst z. B. 8 Stunden und 15 kg Zement abrechnen, ohne den restlichen offenen Bestand anzutasten.</p>
+<button class="primary" id="newBill">＋ Abrechnung erstellen</button>
+</div>
+<div class="card"><h3 style="margin-top:0">Abrechnungen</h3><div id="billings"></div></div>
+</section>
 
-<section id="settings" class="hidden"><div class="card"><h2 style="margin-top:0">Stammdaten</h2><label>Material (Komma getrennt)</label><input id="matMaster"><label>Werkzeug (Komma getrennt)</label><input id="toolMaster"><button class="primary" style="margin-top:14px" id="saveMaster">Speichern</button></div></section>
-</main><nav><button id="nHome">🏠<br>Start</button><button id="nEntry">＋<br>Eintrag</button><button id="nOverview">📊<br>Übersicht</button><button id="nBilling">💶<br>Abrechnung</button><button id="nSettings">⚙️<br>Mehr</button></nav></div>
-<div id="modal" class="modal hidden"><div class="sheet"><h2 style="margin-top:0">Neue Abrechnung</h2><div id="billChoices"></div><button class="primary" id="createBill" style="margin-top:14px">Ausgewähltes abrechnen</button><button class="secondary" id="closeModal" style="width:100%;margin-top:8px">Abbrechen</button></div></div>
+<section id="settings" class="hidden">
+<div class="card"><h2 style="margin-top:0">Stammdaten</h2>
+<p class="muted">Material und Werkzeug hier einmal anlegen. Danach erscheinen sie bei der Eingabe als Auswahl/Vorschlag.</p>
+<label>Material (Komma getrennt)</label><input id="matMaster" placeholder="Zement, Schrauben, Beton"><div class="muted small">Einheit wird automatisch vorgeschlagen, z. B. Zement → Sack.</div>
+<label>Werkzeug (Komma getrennt)</label><input id="toolMaster" placeholder="Bohrhammer, Akkuschrauber">
+<button class="primary" style="margin-top:14px" id="saveMaster">Speichern</button>
+</div>
+</section>
+</main>
+
+<nav>
+<button id="nHome">🏠<br>Start</button><button id="nEntry">＋<br>Eintrag</button><button id="nOverview">📊<br>Übersicht</button><button id="nBilling">💶<br>Abrechnung</button><button id="nSettings">⚙️<br>Mehr</button>
+</nav>
+</div>
+
+<div id="modal" class="modal hidden"><div class="sheet">
+<h2 style="margin-top:0">Neue Abrechnung</h2>
+<p class="muted">Wähle zuerst die Arbeitstage aus, aus denen Material/Stunden verfügbar sind. Danach kannst du die gewünschten Mengen anpassen.</p>
+<div id="billChoices"></div>
+<div class="subtle"><b>Diese Abrechnung</b><div id="billSelectedSummary" style="margin-top:5px">Noch nichts ausgewählt.</div><div id="billCustom" class="hidden" style="margin-top:10px"></div></div>
+<button class="primary" id="createBill" style="margin-top:14px">Abrechnung speichern</button>
+<button class="secondary" id="closeModal" style="width:100%;margin-top:8px">Abbrechen</button>
+</div></div>
+
 <script>
 (function(){
-"use strict";var KEY="baustellenzeit_v4",db=JSON.parse(localStorage.getItem(KEY)||"null");
-if(!db)db={projects:[{id:"p1",name:"Meine Baustelle"}],projectId:"p1",entries:[],billings:[],materials:["Zement","Beton","Schrauben","Dübel","Holz","Kabel"],tools:["Bohrhammer","Akkuschrauber","Winkelschleifer","Schaufel"]};
-db.billings=db.billings||[];db.entries=db.entries||[];localStorage.setItem(KEY,JSON.stringify(db));
-function $(x){return document.getElementById(x)}function save(){localStorage.setItem(KEY,JSON.stringify(db))}function uid(){return Date.now()+Math.random().toString(36).slice(2)}
-function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]})}
-function diff(a,b){var x=a.split(":"),y=b.split(":"),m=(+x[0])*60+(+x[1]),n=(+y[0])*60+(+y[1]);if(n<m)n+=1440;return n-m}function fmt(m){return Math.floor(m/60)+":"+String(Math.round(m%60)).padStart(2,"0")+" h"}function work(){return Math.max(0,diff($("start").value,$("end").value)-diff("00:00",$("pause").value))}
-function projects(){var h=db.projects.map(function(p){return'<option value="'+p.id+'">'+esc(p.name)+'</option>'}).join("");$("projectSelect").innerHTML=h;$("ovProject").innerHTML=h;$("billProject").innerHTML=h;$("projectSelect").value=db.projectId;$("ovProject").value=window.ovP||db.projectId;$("billProject").value=window.billP||db.projectId}
-function entries(pid){return db.entries.filter(function(e){return e.projectId===pid})}
-function billedMinutes(pid){var n=0;db.billings.filter(function(b){return b.projectId===pid}).forEach(function(b){n+=b.minutes});return n}
-function render(){
- projects();var es=entries(db.projectId),t=es.reduce(function(a,e){return a+e.minutes},0),b=billedMinutes(db.projectId);$("totalH").textContent=fmt(t);$("openH").textContent=fmt(Math.max(0,t-b));
- $("recent").innerHTML=es.slice().sort(function(a,b){return b.date.localeCompare(a.date)}).slice(0,8).map(function(e){return '<div class="item"><b>'+esc(e.date)+'</b> · '+fmt(e.minutes)+' '+(e.billed?' <span class="badge done">abgerechnet</span>':'<span class="badge">offen</span>')+'<div class="muted">'+e.materials.map(function(m){return esc(m.qty)+" "+esc(m.unit)+" "+esc(m.name)}).join(", ")+'</div></div>'}).join("")||'<div class="muted">Noch keine Einträge.</div>';overview();billing();$("matMaster").value=db.materials.join(", ");$("toolMaster").value=db.tools.join(", ")
+"use strict";
+
+var KEY="baustellenzeit_v7";
+var db;
+try{db=JSON.parse(localStorage.getItem(KEY)||"null");}catch(e){db=null;}
+if(!db){
+ db={projects:[{id:"p1",name:"Meine Baustelle"}],projectId:"p1",entries:[],billings:[],
+ materials:["Zement","Beton","Schrauben","Dübel","Holz","Kabel"],
+ tools:["Bohrhammer","Akkuschrauber","Winkelschleifer","Schaufel"]};
 }
-function overview(){var pid=window.ovP||db.projectId,es=entries(pid),t=es.reduce(function(a,e){return a+e.minutes},0),b=billedMinutes(pid);$("ovTotal").textContent=fmt(t);$("ovBilled").textContent=fmt(b);
-$("days").innerHTML=es.slice().sort(function(a,b){return b.date.localeCompare(a.date)}).map(function(e){return'<div class="item"><b>'+esc(e.date)+'</b> · '+esc(e.start)+'–'+esc(e.end)+' · Pause '+esc(e.pause)+'<br><b>'+fmt(e.minutes)+'</b> '+(e.billed?'<span class="badge done">abgerechnet</span>':'<span class="badge">offen</span>')+(e.note?'<div class="muted">'+esc(e.note)+'</div>':"")+'</div>'}).join("")||'<div class="muted">Noch keine Einträge.</div>';
-var mm={};es.forEach(function(e){e.materials.forEach(function(m){var k=m.name+"|"+m.unit;mm[k]=(mm[k]||0)+m.qty})});$("matSum").innerHTML=Object.keys(mm).map(function(k){var x=k.split("|");return'<div class="item"><b>'+mm[k]+' '+esc(x[1])+'</b> '+esc(x[0])+'</div>'}).join("")||'<div class="muted">Noch kein Material.</div>';
-var tt={};es.forEach(function(e){e.tools.forEach(function(x){tt[x]=(tt[x]||0)+1})});$("toolSum").innerHTML=Object.keys(tt).map(function(x){return'<div class="item"><b>'+esc(x)+'</b> · '+tt[x]+' Tage</div>'}).join("")||'<div class="muted">Noch kein Werkzeug.</div>'}
-function billing(){var pid=window.billP||db.projectId,es=entries(pid),b=billedMinutes(pid),t=es.reduce(function(a,e){return a+e.minutes},0);$("billOpen").textContent=fmt(Math.max(0,t-b));$("billDone").textContent=fmt(b);
-$("billings").innerHTML=db.billings.filter(function(x){return x.projectId===pid}).slice().reverse().map(function(x){return'<div class="item"><b>Abrechnung '+esc(x.number)+'</b><div>'+fmt(x.minutes)+' · '+x.materials.map(function(m){return esc(m.qty)+" "+esc(m.unit)+" "+esc(m.name)}).join(", ")+'</div><div class="muted">'+esc(x.date)+'</div></div>'}).join("")||'<div class="muted">Noch keine Abrechnungen.</div>'}
-function show(id){["home","entry","overview","billing","settings"].forEach(function(x){$(x).classList.toggle("hidden",x!==id)});["Home","Entry","Overview","Billing","Settings"].forEach(function(x){$("n"+x).classList.remove("active")});$("n"+id.charAt(0).toUpperCase()+id.slice(1)).classList.add("active");if(id==="overview")overview();if(id==="billing")billing()}
-function reset(){var d=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);$("date").value=d;$("start").value="07:00";$("end").value="15:00";$("pause").value="01:00";$("note").value="";$("materials").innerHTML="";$("tools").innerHTML="";$("calc").textContent=fmt(work())}
-function matRow(){var d=document.createElement("div");d.className="row";d.innerHTML='<input class="matName grow" placeholder="Material"><input class="matQty" type="number" min="0" step="0.01" placeholder="Menge" style="max-width:90px"><input class="matUnit" placeholder="Einheit" style="max-width:78px"><button class="danger">×</button>';d.querySelector("button").onclick=function(){d.remove()};$("materials").appendChild(d)}
-function toolRow(){var d=document.createElement("div");d.className="row";d.innerHTML='<input class="toolName grow" placeholder="Werkzeug"><button class="danger">×</button>';d.querySelector("button").onclick=function(){d.remove()};$("tools").appendChild(d)}
-$("projectSelect").onchange=function(){db.projectId=this.value;save();render()};$("ovProject").onchange=function(){window.ovP=this.value;overview()};$("billProject").onchange=function(){window.billP=this.value;billing()};
-$("addProject").onclick=function(){var n=prompt("Name der Baustelle:");if(n&&n.trim()){db.projects.push({id:uid(),name:n.trim()});db.projectId=db.projects[db.projects.length-1].id;save();render()}};
-$("newEntry").onclick=function(){reset();show("entry")};$("nHome").onclick=function(){show("home")};$("nEntry").onclick=function(){reset();show("entry")};$("nOverview").onclick=function(){show("overview")};$("nBilling").onclick=function(){show("billing")};$("nSettings").onclick=function(){show("settings")};
-$("addMat").onclick=matRow;$("addTool").onclick=toolRow;$("start").oninput=$("end").oninput=$("pause").oninput=function(){$("calc").textContent=fmt(work())};
-$("saveEntry").onclick=function(){var mats=[].slice.call(document.querySelectorAll(".matName")).map(function(x,i){var r=x.parentNode;return{name:x.value.trim(),qty:Number(r.querySelector(".matQty").value)||0,unit:r.querySelector(".matUnit").value.trim()}}).filter(function(x){return x.name});var tools=[].slice.call(document.querySelectorAll(".toolName")).map(function(x){return x.value.trim()}).filter(Boolean);db.entries.push({id:uid(),projectId:db.projectId,date:$("date").value,start:$("start").value,end:$("end").value,pause:$("pause").value,minutes:work(),note:$("note").value.trim(),materials:mats,tools:tools,billed:false});save();alert("Arbeitstag gespeichert.");render();show("home")};
-$("newBill").onclick=function(){var pid=window.billP||db.projectId,es=entries(pid).filter(function(e){return !e.billed});var html="";es.forEach(function(e){html+='<label class="checkrow"><input type="checkbox" class="billEntry" value="'+e.id+'"><span class="name"><b>'+esc(e.date)+'</b> · '+fmt(e.minutes)+'<br><span class="muted">'+e.materials.map(function(m){return esc(m.qty)+" "+esc(m.unit)+" "+esc(m.name)}).join(", ")+'</span></span></label>'});$("billChoices").innerHTML=html||'<p class="muted">Keine offenen Einträge vorhanden.</p>';$("modal").classList.remove("hidden")};
-$("closeModal").onclick=function(){$("modal").classList.add("hidden")};
-$("createBill").onclick=function(){var ids=[].slice.call(document.querySelectorAll(".billEntry:checked")).map(function(x){return x.value});if(!ids.length){alert("Bitte mindestens einen Eintrag auswählen.");return}var es=db.entries.filter(function(e){return ids.indexOf(e.id)>=0}),mats={};es.forEach(function(e){e.billed=true;e.materials.forEach(function(m){var k=m.name+"|"+m.unit;mats[k]=(mats[k]||0)+m.qty})});var ma=Object.keys(mats).map(function(k){var x=k.split("|");return{name:x[0],unit:x[1],qty:mats[k]}});db.billings.push({id:uid(),projectId:window.billP||db.projectId,number:db.billings.length+1,date:new Date().toLocaleDateString("de-AT"),minutes:es.reduce(function(a,e){return a+e.minutes},0),materials:ma});save();$("modal").classList.add("hidden");render();show("billing")};
-$("saveMaster").onclick=function(){db.materials=$("matMaster").value.split(",").map(function(x){return x.trim()}).filter(Boolean);db.tools=$("toolMaster").value.split(",").map(function(x){return x.trim()}).filter(Boolean);save();alert("Gespeichert.")};
-reset();render();show("home");
-})();</script></body></html>
+db.projects=db.projects||[]; db.entries=db.entries||[]; db.billings=db.billings||[];
+db.materials=db.materials||[]; db.tools=db.tools||[];
+if(!db.projects.length){db.projects=[{id:"p1",name:"Meine Baustelle"}];}
+if(!db.projectId){db.projectId=db.projects[0].id;}
+localStorage.setItem(KEY,JSON.stringify(db));
+
+function $(id){return document.getElementById(id);}
+function save(){localStorage.setItem(KEY,JSON.stringify(db));}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c];});}
+function fmt(m){m=Math.max(0,Math.round(Number(m)||0));return Math.floor(m/60)+":"+String(m%60).padStart(2,"0")+" h";}
+function timeToMin(t){var a=String(t||"00:00").split(":");return Number(a[0])*60+Number(a[1]);}
+function diff(a,b){var x=timeToMin(a),y=timeToMin(b);if(y<x)y+=1440;return y-x;}
+function currentWork(){return Math.max(0,diff($("start").value,$("end").value)-timeToMin($("pause").value));}
+function entries(pid){return db.entries.filter(function(e){return e.projectId===pid;});}
+function billedHours(pid){return db.billings.filter(function(b){return b.projectId===pid;}).reduce(function(n,b){return n+(Number(b.minutes)||0);},0);}
+function billedMaterial(pid){
+ var out={};
+ db.billings.filter(function(b){return b.projectId===pid;}).forEach(function(b){
+   (b.materials||[]).forEach(function(m){var k=m.name+"|"+m.unit;out[k]=(out[k]||0)+Number(m.qty||0);});
+ });
+ return out;
+}
+function projectOptions(){
+ return db.projects.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>';}).join("");
+}
+function renderProjects(){
+ var h=projectOptions();
+ $("projectSelect").innerHTML=h;$("ovProject").innerHTML=h;$("billProject").innerHTML=h;
+ $("projectSelect").value=db.projectId;
+ $("ovProject").value=window.ovP||db.projectId;
+ $("billProject").value=window.billP||db.projectId;
+}
+function render(){
+ renderProjects();
+ var es=entries(db.projectId), total=es.reduce(function(n,e){return n+Number(e.minutes||0);},0), billed=billedHours(db.projectId);
+ $("totalH").textContent=fmt(total);$("openH").textContent=fmt(Math.max(0,total-billed));
+ $("recent").innerHTML=es.slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date));}).slice(0,8).map(function(e){
+   return '<div class="item"><b>'+esc(e.date)+'</b> · '+fmt(e.minutes)+' '+(e.billedLegacy?'<span class="badge done">teilweise abgerechnet</span>':'')+
+   '<div class="muted">'+(e.materials||[]).map(function(m){return esc(m.qty)+" "+esc(m.unit)+" "+esc(m.name);}).join(", ")+'</div>'+
+   '<div class="actions"><button class="secondary" data-edit="'+e.id+'">Bearbeiten</button><button class="secondary" data-dup="'+e.id+'">Duplizieren</button><button class="danger" data-delete="'+e.id+'">Löschen</button></div></div>';
+ }).join("")||'<div class="muted">Noch keine Einträge.</div>';
+ document.querySelectorAll("[data-edit]").forEach(function(b){b.onclick=function(){editEntry(this.getAttribute("data-edit"));};});
+ document.querySelectorAll("[data-dup]").forEach(function(b){b.onclick=function(){duplicateEntry(this.getAttribute("data-dup"));};});document.querySelectorAll("[data-delete]").forEach(function(b){b.onclick=function(){deleteEntry(this.getAttribute("data-delete"));};});
+ renderOverview();renderBilling();renderMaster();
+}
+function renderOverview(){
+ var pid=window.ovP||db.projectId,es=entries(pid),total=es.reduce(function(n,e){return n+Number(e.minutes||0);},0),b=billedHours(pid);
+ $("ovTotal").textContent=fmt(total);$("ovBilled").textContent=fmt(b);
+ $("days").innerHTML=es.slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date));}).map(function(e){
+  return '<div class="item"><b>'+esc(e.date)+'</b> · '+esc(e.start)+'–'+esc(e.end)+' · Pause '+esc(e.pause)+'<br><b>'+fmt(e.minutes)+'</b>'+
+  '<div class="muted">'+(e.note?esc(e.note):"")+'</div><div class="actions"><button class="secondary" data-edit2="'+e.id+'">Bearbeiten</button><button class="secondary" data-dup2="'+e.id+'">Duplizieren</button><button class="danger" data-delete2="'+e.id+'">Löschen</button></div></div>';
+ }).join("")||'<div class="muted">Noch keine Einträge.</div>';
+ document.querySelectorAll("[data-edit2]").forEach(function(b){b.onclick=function(){editEntry(this.getAttribute("data-edit2"));};});
+ document.querySelectorAll("[data-dup2]").forEach(function(b){b.onclick=function(){duplicateEntry(this.getAttribute("data-dup2"));};});document.querySelectorAll("[data-delete2]").forEach(function(b){b.onclick=function(){deleteEntry(this.getAttribute("data-delete2"));};});
+ var mm={};es.forEach(function(e){(e.materials||[]).forEach(function(m){var k=m.name+"|"+m.unit;mm[k]=(mm[k]||0)+Number(m.qty||0);});});
+ $("matSum").innerHTML=Object.keys(mm).map(function(k){var x=k.split("|");return '<div class="item"><b>'+mm[k]+' '+esc(x[1])+'</b> '+esc(x[0])+'</div>';}).join("")||'<div class="muted">Noch kein Material.</div>';
+ var tt={};es.forEach(function(e){(e.tools||[]).forEach(function(x){tt[x]=(tt[x]||0)+1;});});
+ $("toolSum").innerHTML=Object.keys(tt).map(function(x){return '<div class="item"><b>'+esc(x)+'</b> · '+tt[x]+' Tage</div>';}).join("")||'<div class="muted">Noch kein Werkzeug.</div>';
+}
+function renderBilling(){
+ var pid=window.billP||db.projectId,es=entries(pid),total=es.reduce(function(n,e){return n+Number(e.minutes||0);},0),b=billedHours(pid),openMat={};
+ es.forEach(function(e){(e.materials||[]).forEach(function(m){var k=m.name+"|"+m.unit;openMat[k]=(openMat[k]||0)+Number(m.qty||0);});});
+ var bm=billedMaterial(pid);
+ Object.keys(bm).forEach(function(k){openMat[k]=(openMat[k]||0)-bm[k];});
+ $("billOpen").textContent=fmt(Math.max(0,total-b));$("billDone").textContent=fmt(b);
+ $("billMatTotals").innerHTML=Object.keys(openMat).map(function(k){var x=k.split("|"),all=0;es.forEach(function(e){(e.materials||[]).forEach(function(m){if(m.name===x[0]&&m.unit===x[1])all+=Number(m.qty||0);});});var done=bm[k]||0,open=Math.max(0,all-done);return '<div>'+esc(x[0])+': <b>'+open+' '+esc(x[1])+' offen</b> / '+all+' '+esc(x[1])+' gesamt</div>';}).join("")||'<span class="muted">Kein Material.</span>';
+ $("billings").innerHTML=db.billings.filter(function(x){return x.projectId===pid;}).slice().reverse().map(function(x){
+   return '<div class="item"><b>Abrechnung '+esc(x.number)+'</b> · '+esc(x.date)+'<br><b>'+fmt(x.minutes)+'</b>'+
+   ((x.materials||[]).length?'<div>'+x.materials.map(function(m){return esc(m.qty)+" "+esc(m.unit)+" "+esc(m.name);}).join(", ")+'</div>':'')+
+   '<div class="actions"><button class="secondary" data-viewbill="'+x.id+'">Details</button><button class="danger" data-deletebill="'+x.id+'">Löschen</button></div></div>';
+ }).join("")||'<div class="muted">Noch keine Abrechnungen.</div>';
+ document.querySelectorAll("[data-viewbill]").forEach(function(b){b.onclick=function(){viewBilling(this.getAttribute("data-viewbill"));};});
+ document.querySelectorAll("[data-deletebill]").forEach(function(b){b.onclick=function(){deleteBilling(this.getAttribute("data-deletebill"));};});
+}
+function renderMaster(){$("matMaster").value=db.materials.join(", ");$("toolMaster").value=db.tools.join(", ");}
+function show(id){
+ ["home","entry","overview","billing","settings"].forEach(function(x){$(x).classList.toggle("hidden",x!==id);});
+ ["Home","Entry","Overview","Billing","Settings"].forEach(function(x){$("n"+x).classList.remove("active");});
+ $("n"+id.charAt(0).toUpperCase()+id.slice(1)).classList.add("active");
+ if(id==="overview")renderOverview();if(id==="billing")renderBilling();
+}
+var editId=null;
+function resetEntry(){
+ editId=null;$("entryTitle").textContent="Arbeitstag erfassen";
+ var d=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+ $("date").value=d;$("start").value="07:00";$("end").value="15:00";$("pause").value="01:00";$("note").value="";
+ $("materials").innerHTML="";$("tools").innerHTML="";$("calc").textContent=fmt(currentWork());addToolChoices();
+}
+function editEntry(id){
+ var e=db.entries.find(function(x){return x.id===id;});if(!e)return;
+ editId=id;$("entryTitle").textContent="Arbeitstag bearbeiten";db.projectId=e.projectId;
+ $("date").value=e.date;$("start").value=e.start;$("end").value=e.end;$("pause").value=e.pause;$("note").value=e.note||"";
+ $("materials").innerHTML="";$("tools").innerHTML="";
+ (e.materials||[]).forEach(function(m){addMaterial(m);});(e.tools||[]).forEach(function(t){addTool(t);});addToolChoices();
+ $("calc").textContent=fmt(currentWork());renderProjects();show("entry");
+}
+function duplicateEntry(id){
+ var e=db.entries.find(function(x){return x.id===id;});if(!e)return;
+ var copy=JSON.parse(JSON.stringify(e));copy.id=uid();
+ copy.date=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+ db.entries.push(copy);save();render();alert("Arbeitstag wurde für heute dupliziert.");
+}
+function deleteEntry(id){
+ var e=db.entries.find(function(x){return x.id===id;});if(!e)return;
+ if(!confirm("Arbeitstag "+e.date+" wirklich löschen?"))return;
+ db.entries=db.entries.filter(function(x){return x.id!==id;});save();render();
+}
+function defaultUnit(name){
+ var n=String(name||"").toLowerCase();
+ if(n.indexOf("zement")>=0)return "Sack";
+ if(n.indexOf("beton")>=0)return "m³";
+ if(n.indexOf("kabel")>=0||n.indexOf("holz")>=0)return "m";
+ if(n.indexOf("schraub")>=0||n.indexOf("dübel")>=0)return "Stk.";
+ return "";
+}
+function addMaterial(m){
+ m=m||{name:"",qty:"",unit:""};
+ var d=document.createElement("div");d.className="row";
+ d.innerHTML='<div class="grow"><input class="matName" list="materialList" placeholder="Material" value="'+esc(m.name)+'"></div>'+
+ '<input class="matQty" type="number" min="0" step="0.01" placeholder="Menge" style="max-width:90px" value="'+esc(m.qty)+'">'+
+ '<input class="matUnit" list="unitList" placeholder="Einheit" style="max-width:78px" value="'+esc(m.unit)+'">'+
+ '<button class="danger">×</button>';
+ d.querySelector("button").onclick=function(){d.remove();};
+ var ni=d.querySelector(".matName"),ui=d.querySelector(".matUnit");
+ ni.onchange=function(){if(!ui.value)ui.value=defaultUnit(ni.value);};
+ $("materials").appendChild(d);
+}
+function addTool(t){
+ t=t||"";var d=document.createElement("div");d.className="row";
+ d.innerHTML='<input class="toolName grow" list="toolList" placeholder="Werkzeug" value="'+esc(t)+'"><button class="danger">×</button>';
+ d.querySelector("button").onclick=function(){d.remove();};$("tools").appendChild(d);
+}
+function addToolChoices(){
+ var old=document.getElementById("toolQuickSelect");if(old)old.remove();
+ var box=document.createElement("div");box.id="toolQuickSelect";box.className="subtle";
+ box.innerHTML="<b>Schnellauswahl</b><div id='toolChecks' style='margin-top:6px'></div>";
+ $("tools").parentNode.insertBefore(box,$("tools"));
+ db.tools.forEach(function(t){
+  var row=document.createElement("label");row.style.display="flex";row.style.alignItems="center";row.style.gap="8px";row.style.margin="6px 0";
+  row.innerHTML='<input type="checkbox" style="width:20px;height:20px"> <span>'+esc(t)+'</span>';
+  row.querySelector("input").onchange=function(){
+   var existing=[].slice.call(document.querySelectorAll("#tools .toolName")).map(function(x){return x.value;});
+   if(this.checked && existing.indexOf(t)<0)addTool(t);
+   if(!this.checked)[].slice.call(document.querySelectorAll("#tools .toolName")).forEach(function(x){if(x.value===t)x.parentNode.remove();});
+  };
+  $("toolChecks").appendChild(row);
+ });
+}
+function saveEntry(){
+ var mats=[].slice.call(document.querySelectorAll("#materials .row")).map(function(r){return{name:r.querySelector(".matName").value.trim(),qty:Number(r.querySelector(".matQty").value)||0,unit:r.querySelector(".matUnit").value.trim()};}).filter(function(x){return x.name;});
+ var tools=[].slice.call(document.querySelectorAll("#tools .toolName")).map(function(x){return x.value.trim();}).filter(Boolean);
+ if(editId){
+   var e=db.entries.find(function(x){return x.id===editId;});
+   e.projectId=db.projectId;e.date=$("date").value;e.start=$("start").value;e.end=$("end").value;e.pause=$("pause").value;e.minutes=currentWork();e.note=$("note").value.trim();e.materials=mats;e.tools=tools;
+ }else{
+   db.entries.push({id:uid(),projectId:db.projectId,date:$("date").value,start:$("start").value,end:$("end").value,pause:$("pause").value,minutes:currentWork(),note:$("note").value.trim(),materials:mats,tools:tools});
+ }
+ save();alert(editId?"Arbeitstag geändert.":"Arbeitstag gespeichert.");resetEntry();render();show("home");
+}
+function addProject(){var n=prompt("Name der Baustelle:");if(n&&n.trim()){var p={id:uid(),name:n.trim()};db.projects.push(p);db.projectId=p.id;save();render();}}
+function materialFromSelectedDays(ids){
+ var mats={};ids.forEach(function(id){var e=db.entries.find(function(x){return x.id===id;});if(e)(e.materials||[]).forEach(function(m){var k=m.name+"|"+m.unit;mats[k]=(mats[k]||0)+Number(m.qty||0);});});
+ return mats;
+}
+function openBillingModal(){
+ var pid=window.billP||db.projectId,es=entries(pid);
+ var html=es.map(function(e){return '<label class="checkrow"><input type="checkbox" class="billEntry" value="'+e.id+'"><span class="name"><b>'+esc(e.date)+'</b> · '+fmt(e.minutes)+'<br><span class="muted">'+(e.materials||[]).map(function(m){return esc(m.qty)+" "+esc(m.unit)+" "+esc(m.name);}).join(", ")+'</span></span></label>';}).join("");
+ $("billChoices").innerHTML=html||'<p class="muted">Keine Arbeitstage vorhanden.</p>';
+ $("billSelectedSummary").textContent="Noch nichts ausgewählt.";
+ $("modal").classList.remove("hidden");
+ document.querySelectorAll(".billEntry").forEach(function(c){c.onchange=updateBillSelection;});
+}
+function updateBillSelection(){
+ var ids=[].slice.call(document.querySelectorAll(".billEntry:checked")).map(function(x){return x.value;});
+ if(!ids.length){$("billSelectedSummary").textContent="Noch nichts ausgewählt.";$("billCustom").classList.add("hidden");return;}
+ var mins=ids.reduce(function(n,id){var e=db.entries.find(function(x){return x.id===id;});return n+(e?e.minutes:0);},0),m=materialFromSelectedDays(ids);
+ $("billSelectedSummary").innerHTML="<b>Verfügbar:</b> "+fmt(mins)+"<br><b>Material:</b> "+(Object.keys(m).map(function(k){var x=k.split("|");return m[k]+" "+esc(x[1])+" "+esc(x[0]);}).join(", ")||"kein Material");
+ var html="<label>Stunden dieser Abrechnung</label><input id='customBillMinutes' type='number' min='0' step='0.25' value='"+(mins/60)+"'><div style='margin-top:10px'><b>Materialmengen dieser Abrechnung</b></div>";
+ Object.keys(m).forEach(function(k){var x=k.split("|");html+='<div class="row"><span class="grow">'+esc(x[0])+' <span class="muted">('+esc(x[1])+')</span></span><input class="customMat" data-name="'+esc(x[0])+'" data-unit="'+esc(x[1])+'" type="number" min="0" step="0.01" value="'+m[k]+'" style="max-width:120px"></div>';});
+ $("billCustom").innerHTML=html;$("billCustom").classList.remove("hidden");
+}
+function createBilling(){
+ var ids=[].slice.call(document.querySelectorAll(".billEntry:checked")).map(function(x){return x.value;});
+ if(!ids.length){alert("Bitte mindestens einen Arbeitstag auswählen.");return;}
+ var available=ids.reduce(function(n,id){var e=db.entries.find(function(x){return x.id===id;});return n+(e?e.minutes:0);},0);
+ var mins=Math.round((Number($("customBillMinutes").value)||0)*60);
+ if(mins<0||mins>available){alert("Zu viele Stunden ausgewählt. Maximal "+fmt(available)+".");return;}
+ var already=billedMaterial(window.billP||db.projectId), mats=[],bad=false;
+ [].slice.call(document.querySelectorAll(".customMat")).forEach(function(inp){
+  var q=Number(inp.value)||0,k=inp.dataset.name+"|"+inp.dataset.unit,avail=0;
+  ids.forEach(function(id){var e=db.entries.find(function(x){return x.id===id;});if(e)(e.materials||[]).forEach(function(m){if(m.name+"|"+m.unit===k)avail+=Number(m.qty||0);});});
+  var maxOpen=Math.max(0,avail-(already[k]||0));
+  if(q>maxOpen){alert("Zu viel "+inp.dataset.name+". Maximal offen in dieser Auswahl: "+maxOpen+" "+inp.dataset.unit);bad=true;}
+  if(q>0)mats.push({name:inp.dataset.name,unit:inp.dataset.unit,qty:q});
+ });
+ if(bad)return;
+ db.billings.push({id:uid(),projectId:window.billP||db.projectId,number:db.billings.length+1,date:new Date().toLocaleDateString("de-AT"),minutes:mins,materials:mats,entryIds:ids});
+ save();$("modal").classList.add("hidden");render();show("billing");
+}
+function viewBilling(id){var b=db.billings.find(function(x){return x.id===id;});if(!b)return;alert("Abrechnung "+b.number+"\\n\\nStunden: "+fmt(b.minutes)+"\\nMaterial: "+(b.materials||[]).map(function(m){return m.qty+" "+m.unit+" "+m.name;}).join("\\n"));}
+function deleteBilling(id){if(!confirm("Diese Abrechnung löschen? Die Stunden und Materialien werden dadurch wieder offen."))return;db.billings=db.billings.filter(function(x){return x.id!==id;});save();render();}
+$("projectSelect").onchange=function(){db.projectId=this.value;save();render();};
+$("ovProject").onchange=function(){window.ovP=this.value;renderOverview();};
+$("billProject").onchange=function(){window.billP=this.value;renderBilling();};
+$("addProject").onclick=addProject;
+$("newEntry").onclick=function(){resetEntry();show("entry");};
+$("nHome").onclick=function(){show("home");};$("nEntry").onclick=function(){resetEntry();show("entry");};$("nOverview").onclick=function(){show("overview");};$("nBilling").onclick=function(){show("billing");};$("nSettings").onclick=function(){show("settings");};
+$("addMat").onclick=function(){addMaterial();};$("addTool").onclick=function(){addTool();};
+$("start").oninput=$("end").oninput=$("pause").oninput=function(){$("calc").textContent=fmt(currentWork());};
+$("saveEntry").onclick=saveEntry;$("cancelEntry").onclick=function(){resetEntry();show("home");};
+$("newBill").onclick=openBillingModal;$("closeModal").onclick=function(){$("modal").classList.add("hidden");};$("createBill").onclick=createBilling;
+$("saveMaster").onclick=function(){db.materials=$("matMaster").value.split(",").map(function(x){return x.trim();}).filter(Boolean);db.tools=$("toolMaster").value.split(",").map(function(x){return x.trim();}).filter(Boolean);save();render();alert("Gespeichert. Ab jetzt erscheinen die Einträge als Auswahl.");};
+
+var dl=document.createElement("div");dl.innerHTML='<datalist id="materialList"></datalist><datalist id="toolList"></datalist><datalist id="unitList"><option value="Stk."><option value="kg"><option value="Sack"><option value="m"><option value="m²"><option value="m³"><option value="l"><option value="Stk"></datalist>';document.body.appendChild(dl);
+function refreshLists(){
+ $("materialList").innerHTML=db.materials.map(function(x){return '<option value="'+esc(x)+'">';}).join("");
+ $("toolList").innerHTML=db.tools.map(function(x){return '<option value="'+esc(x)+'">';}).join("");
+}
+var oldRenderMaster=renderMaster;renderMaster=function(){oldRenderMaster();refreshLists();};
+resetEntry();render();show("home");
+})();
+</script>
+</body>
+</html>
