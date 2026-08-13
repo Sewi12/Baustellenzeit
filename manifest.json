@@ -1,1 +1,19 @@
-{"name": "Baustellenzeit", "short_name": "Baustellenzeit", "start_url": "./", "display": "standalone", "background_color": "#f3f4f6", "theme_color": "#111827"}
+{
+  "name": "Baustellenzeit",
+  "short_name": "Baustellenzeit",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "description": "Digitale Stunden-, Material- und Werkzeugaufzeichnung",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
