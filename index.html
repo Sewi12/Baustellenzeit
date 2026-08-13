@@ -125,18 +125,24 @@ nav button{flex:1;background:#f3f4f6;padding:9px 3px;font-size:13px}nav button.a
 (function(){
 "use strict";
 
-var KEY="baustellenzeit_v7_app";
-var db;
-try{db=JSON.parse(localStorage.getItem(KEY)||"null");}catch(e){db=null;}
+var KEY="baustellenzeit_data";
+var LEGACY_KEYS=["baustellenzeit_data","baustellenzeit_v7_app","baustellenzeit_v6","baustellenzeit_v7","baustellenzeit_v5","baustellenzeit_v4","baustellenzeit_v3","baustellenzeit_v2","baustellenzeit_v1"];
+var db=null;
+for(var ki=0;ki<LEGACY_KEYS.length;ki++){
+ try{
+  var raw=localStorage.getItem(LEGACY_KEYS[ki]);
+  if(raw){var candidate=JSON.parse(raw);if(candidate&&candidate.projects&&candidate.entries){db=candidate;break;}}
+ }catch(e){}
+}
 if(!db){
  db={projects:[{id:"p1",name:"Meine Baustelle"}],projectId:"p1",entries:[],billings:[],
  materials:["Zement","Beton","Schrauben","Dübel","Holz","Kabel"],
  tools:["Bohrhammer","Akkuschrauber","Winkelschleifer","Schaufel"]};
 }
-db.projects=db.projects||[]; db.entries=db.entries||[]; db.billings=db.billings||[];
-db.materials=db.materials||[]; db.tools=db.tools||[];
-if(!db.projects.length){db.projects=[{id:"p1",name:"Meine Baustelle"}];}
-if(!db.projectId){db.projectId=db.projects[0].id;}
+db.projects=db.projects||[];db.entries=db.entries||[];db.billings=db.billings||[];
+db.materials=db.materials||[];db.tools=db.tools||[];
+if(!db.projects.length)db.projects=[{id:"p1",name:"Meine Baustelle"}];
+if(!db.projectId)db.projectId=db.projects[0].id;
 localStorage.setItem(KEY,JSON.stringify(db));
 
 function $(id){return document.getElementById(id);}
