@@ -1,199 +1,157 @@
 <!doctype html>
 <html lang="de">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#111827">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Baustellenzeit">
-  <link rel="manifest" href="manifest.json">
-  <title>Baustellenzeit</title>
-  <style>
-    :root { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#111827; background:#f3f4f6; }
-    * { box-sizing:border-box; }
-    body { margin:0; background:#f3f4f6; }
-    .app { max-width:620px; margin:auto; min-height:100vh; padding-bottom:88px; }
-    header { background:#111827; color:white; padding:calc(18px + env(safe-area-inset-top)) 20px 18px; }
-    header h1 { margin:0; font-size:25px; } header p { margin:5px 0 0; opacity:.75; }
-    main { padding:16px; }
-    .card { background:white; border-radius:18px; padding:16px; margin-bottom:14px; box-shadow:0 1px 4px #00000012; }
-    .hero { display:flex; justify-content:space-between; align-items:center; gap:12px; }
-    .hours { font-size:34px; font-weight:800; }
-    label { display:block; font-size:13px; font-weight:700; color:#6b7280; margin:12px 0 6px; }
-    input, select, textarea { width:100%; border:1px solid #d1d5db; border-radius:11px; padding:12px; font-size:16px; background:white; }
-    textarea { min-height:78px; resize:vertical; }
-    .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    button { border:0; border-radius:12px; padding:13px 15px; font-size:16px; font-weight:700; cursor:pointer; }
-    .primary { background:#111827; color:white; width:100%; }
-    .secondary { background:#e5e7eb; color:#111827; }
-    .danger { background:#fee2e2; color:#991b1b; }
-    .row { display:flex; gap:8px; align-items:center; margin:8px 0; }
-    .row > *:first-child { flex:1; }
-    .pill { background:#eef2ff; color:#3730a3; padding:7px 10px; border-radius:999px; font-size:13px; font-weight:700; }
-    .item { padding:10px 0; border-bottom:1px solid #eee; }
-    .item:last-child { border-bottom:0; }
-    .muted { color:#6b7280; font-size:14px; }
-    nav { position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #ddd; padding:8px max(12px, calc((100vw - 620px)/2 + 12px)) calc(8px + env(safe-area-inset-bottom)); display:flex; gap:8px; }
-    nav button { flex:1; background:#f3f4f6; } nav button.active { background:#111827; color:white; }
-    .hidden { display:none; }
-    .empty { text-align:center; padding:20px 5px; color:#6b7280; }
-    .totalbox { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .stat { background:#f9fafb; border-radius:13px; padding:13px; }
-    .stat b { display:block; font-size:23px; margin-top:3px; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Baustellenzeit">
+<link rel="manifest" href="manifest.json">
+<title>Baustellenzeit</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f4f6;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.app{max-width:650px;margin:auto;min-height:100vh;padding-bottom:90px}
+header{background:#111827;color:#fff;padding:calc(18px + env(safe-area-inset-top)) 18px 18px}
+h1{margin:0;font-size:25px}header p{margin:5px 0 0;opacity:.7}main{padding:15px}
+.card{background:#fff;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 1px 5px #0001}
+label{display:block;font-size:13px;font-weight:700;color:#6b7280;margin:11px 0 6px}
+input,select,textarea{width:100%;font:inherit;font-size:16px;padding:12px;border:1px solid #d1d5db;border-radius:11px;background:#fff;color:#111827}
+textarea{min-height:75px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{font:inherit;font-size:16px;font-weight:700;border:0;border-radius:12px;padding:13px 15px}
+.primary{background:#111827;color:#fff;width:100%}.secondary{background:#e5e7eb;color:#111827}.danger{background:#fee2e2;color:#991b1b}
+.row{display:flex;gap:8px;align-items:center;margin:8px 0}.row .grow{flex:1}
+.stat{background:#f9fafb;border-radius:13px;padding:13px}.big{font-size:32px;font-weight:800;margin-top:3px}
+.muted{color:#6b7280;font-size:14px}.item{padding:11px 0;border-bottom:1px solid #eee}.item:last-child{border-bottom:0}
+.totalgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.hidden{display:none!important}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;padding:7px 10px calc(7px + env(safe-area-inset-bottom));display:flex;gap:7px;z-index:10}
+nav button{flex:1;background:#f3f4f6;padding:9px 4px;font-size:14px}nav button.active{background:#111827;color:#fff}
+</style>
 </head>
 <body>
 <div class="app">
 <header><h1>Baustellenzeit</h1><p>Stunden · Material · Werkzeug</p></header>
-
 <main>
 <section id="home">
-  <div class="card">
-    <label>Baustelle</label>
-    <div class="row">
-      <select id="projectSelect"></select>
-      <button class="secondary" onclick="addProject()">＋</button>
-    </div>
-  </div>
-  <div class="card hero">
-    <div><div class="muted">Gesamtstunden</div><div class="hours" id="totalHours">0:00 h</div></div>
-    <span class="pill" id="entryCount">0 Tage</span>
-  </div>
-  <button class="primary" onclick="show('entry')">＋ Arbeitstag erfassen</button>
-  <div class="card" style="margin-top:14px">
-    <div style="font-weight:800;margin-bottom:8px">Letzte Einträge</div>
-    <div id="recent"></div>
-  </div>
+<div class="card"><label>Baustelle</label><div class="row"><select id="projectSelect" class="grow"></select><button class="secondary" id="addProjectBtn">＋</button></div></div>
+<div class="card"><div class="muted">Gesamtstunden</div><div class="big" id="totalHours">0:00 h</div><div class="muted" id="entryCount">0 Tage</div></div>
+<button class="primary" id="newEntryBtn">＋ Arbeitstag erfassen</button>
+<div class="card" style="margin-top:14px"><b>Letzte Einträge</b><div id="recent"></div></div>
 </section>
 
 <section id="entry" class="hidden">
-  <div class="card">
-    <h2 style="margin-top:0">Arbeitstag</h2>
-    <label>Datum</label><input id="date" type="date">
-    <div class="grid">
-      <div><label>Beginn</label><input id="start" type="time" value="07:00"></div>
-      <div><label>Ende</label><input id="end" type="time" value="15:00"></div>
-    </div>
-    <label>Pause</label><input id="break" type="time" value="01:00">
-    <div class="stat" style="margin-top:12px"><span class="muted">Arbeitszeit</span><b id="calc">7:00 h</b></div>
-    <label>Notiz</label><textarea id="note" placeholder="z. B. Mauer im Keller abgebrochen"></textarea>
-  </div>
-
-  <div class="card">
-    <h3 style="margin-top:0">Material</h3>
-    <div id="materials"></div>
-    <button class="secondary" onclick="addMaterial()">＋ Material</button>
-  </div>
-
-  <div class="card">
-    <h3 style="margin-top:0">Werkzeug</h3>
-    <div id="tools"></div>
-    <button class="secondary" onclick="addTool()">＋ Werkzeug</button>
-  </div>
-
-  <button class="primary" onclick="saveEntry()">Arbeitstag speichern</button>
+<div class="card">
+<h2 style="margin-top:0">Arbeitstag</h2>
+<label>Datum</label><input id="date" type="date">
+<div class="grid"><div><label>Beginn</label><input id="start" type="time" value="07:00"></div><div><label>Ende</label><input id="end" type="time" value="15:00"></div></div>
+<label>Pause</label><input id="breakTime" type="time" value="01:00">
+<div class="stat" style="margin-top:12px"><span class="muted">Arbeitszeit</span><div id="calc" style="font-size:23px;font-weight:800">7:00 h</div></div>
+<label>Notiz</label><textarea id="note" placeholder="z. B. Mauer abgebrochen"></textarea>
+</div>
+<div class="card"><h3 style="margin-top:0">Material</h3><div id="materials"></div><button class="secondary" id="addMaterialBtn">＋ Material</button></div>
+<div class="card"><h3 style="margin-top:0">Werkzeug</h3><div id="tools"></div><button class="secondary" id="addToolBtn">＋ Werkzeug</button></div>
+<button class="primary" id="saveEntryBtn">Arbeitstag speichern</button>
 </section>
 
 <section id="overview" class="hidden">
-  <div class="card">
-    <h2 style="margin-top:0">Übersicht</h2>
-    <label>Baustelle</label><select id="overviewProject"></select>
-    <div class="totalbox" style="margin-top:14px">
-      <div class="stat"><span class="muted">Arbeitszeit</span><b id="ovHours">0:00 h</b></div>
-      <div class="stat"><span class="muted">Arbeitstage</span><b id="ovDays">0</b></div>
-    </div>
-  </div>
-  <div class="card"><h3 style="margin-top:0">Tage</h3><div id="days"></div></div>
-  <div class="card"><h3 style="margin-top:0">Material gesamt</h3><div id="materialSummary"></div></div>
-  <div class="card"><h3 style="margin-top:0">Werkzeug</h3><div id="toolSummary"></div></div>
+<div class="card"><h2 style="margin-top:0">Übersicht</h2><label>Baustelle</label><select id="overviewProject"></select>
+<div class="totalgrid" style="margin-top:12px"><div class="stat"><span class="muted">Arbeitszeit</span><div id="ovHours" style="font-size:23px;font-weight:800">0:00 h</div></div><div class="stat"><span class="muted">Arbeitstage</span><div id="ovDays" style="font-size:23px;font-weight:800">0</div></div></div></div>
+<div class="card"><h3 style="margin-top:0">Tage</h3><div id="days"></div></div>
+<div class="card"><h3 style="margin-top:0">Material gesamt</h3><div id="materialSummary"></div></div>
+<div class="card"><h3 style="margin-top:0">Werkzeug</h3><div id="toolSummary"></div></div>
 </section>
 
 <section id="settings" class="hidden">
-  <div class="card">
-    <h2 style="margin-top:0">Stammdaten</h2>
-    <p class="muted">Material und Werkzeug werden beim Eingeben für die nächste Erfassung vorgeschlagen.</p>
-    <label>Material-Liste (Komma getrennt)</label>
-    <input id="materialMaster">
-    <label>Werkzeug-Liste (Komma getrennt)</label>
-    <input id="toolMaster">
-    <button class="primary" style="margin-top:14px" onclick="saveMaster()">Speichern</button>
-  </div>
+<div class="card"><h2 style="margin-top:0">Stammdaten</h2><p class="muted">Diese Einträge werden beim Tippen vorgeschlagen.</p>
+<label>Material (mit Komma trennen)</label><input id="materialMaster">
+<label>Werkzeug (mit Komma trennen)</label><input id="toolMaster">
+<button class="primary" style="margin-top:14px" id="saveMasterBtn">Speichern</button></div>
 </section>
 </main>
-
 <nav>
-  <button id="nav-home" onclick="show('home')">🏠<br><small>Start</small></button>
-  <button id="nav-entry" onclick="show('entry')">＋<br><small>Eintrag</small></button>
-  <button id="nav-overview" onclick="show('overview')">📊<br><small>Übersicht</small></button>
-  <button id="nav-settings" onclick="show('settings')">⚙️<br><small>Mehr</small></button>
+<button id="navHome">🏠<br>Start</button><button id="navEntry">＋<br>Eintrag</button><button id="navOverview">📊<br>Übersicht</button><button id="navSettings">⚙️<br>Mehr</button>
 </nav>
 </div>
-
 <script>
-const KEY='baustellenzeit_v1';
-let db=JSON.parse(localStorage.getItem(KEY)||'null')||{
-  projects:[{id:crypto.randomUUID(),name:'Meine Baustelle'}], projectId:null, entries:[],
-  materials:['Zement','Beton','Schrauben','Dübel','Holz','Kabel'], tools:['Bohrhammer','Akkuschrauber','Winkelschleifer','Schaufel']
-};
-if(!db.projectId) db.projectId=db.projects[0].id;
-function persist(){localStorage.setItem(KEY,JSON.stringify(db));}
-function fmtMinutes(m){m=Math.max(0,Math.round(m)); return `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')} h`;}
-function minutesBetween(a,b){let [ah,am]=a.split(':').map(Number),[bh,bm]=b.split(':').map(Number);let x=ah*60+am,y=bh*60+bm;if(y<x)y+=1440;return y-x;}
-function calc(){let m=Math.max(0,minutesBetween(start.value,end.value)-minutesBetween('00:00',break.value));document.getElementById('calc').textContent=fmtMinutes(m);}
-[start,end,break].forEach(x=>x.addEventListener('input',calc));
+(function(){
+"use strict";
+var KEY="baustellenzeit_v2";
+var db;
+try{db=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){db=null}
+if(!db){db={projects:[{id:"p1",name:"Meine Baustelle"}],projectId:"p1",entries:[],materials:["Zement","Beton","Schrauben","Dübel","Holz","Kabel"],tools:["Bohrhammer","Akkuschrauber","Winkelschleifer","Schaufel"]};save();}
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]})}
+function uid(){return "x"+Date.now()+Math.random().toString(36).slice(2)}
+function mins(a,b){var x=a.split(":"),y=b.split(":");var m1=+x[0]*60 + +x[1],m2=+y[0]*60 + +y[1];if(m2<m1)m2+=1440;return m2-m1}
+function fmt(m){m=Math.max(0,Math.round(m));return Math.floor(m/60)+":"+String(m%60).padStart(2,"0")+" h"}
+function workMins(){return Math.max(0,mins($("start").value,$("end").value)-mins("00:00",$("breakTime").value))}
+function calc(){ $("calc").textContent=fmt(workMins()) }
 function renderProjects(){
-  for(const id of ['projectSelect','overviewProject']){let s=document.getElementById(id);s.innerHTML=db.projects.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');s.value=id==='projectSelect'?db.projectId:(window.ovProject||db.projectId);s.onchange=()=>{if(id==='projectSelect'){db.projectId=s.value;persist();render();}else{window.ovProject=s.value;renderOverview();}}}
+ var a=$("projectSelect"),b=$("overviewProject");
+ a.innerHTML=db.projects.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>'}).join("");
+ b.innerHTML=a.innerHTML;
+ a.value=db.projectId;b.value=window.ovProject||db.projectId;
 }
-function addProject(){let n=prompt('Name der Baustelle:');if(!n)return;let p={id:crypto.randomUUID(),name:n.trim()};db.projects.push(p);db.projectId=p.id;persist();render();}
-function addProjectRow(){}
-function addMaterial(){
-  const d=document.getElementById('materials'); const div=document.createElement('div'); div.className='row';
-  div.innerHTML=`<input list="matlist" placeholder="Material"><input type="number" min="0" step="0.01" placeholder="Menge" style="max-width:100px"><input placeholder="Einheit" style="max-width:80px"><button class="danger" onclick="this.parentElement.remove()">×</button>`;
-  d.appendChild(div);
-}
-function addTool(){
-  const d=document.getElementById('tools'); const div=document.createElement('div'); div.className='row';
-  div.innerHTML=`<input list="toollist" placeholder="Werkzeug"><button class="danger" onclick="this.parentElement.remove()">×</button>`;
-  d.appendChild(div);
-}
-function saveEntry(){
-  const mats=[...document.querySelectorAll('#materials .row')].map(r=>{let i=r.querySelectorAll('input');return {name:i[0].value.trim(),qty:Number(i[1].value)||0,unit:i[2].value.trim()}}).filter(x=>x.name);
-  const tools=[...document.querySelectorAll('#tools .row')].map(r=>r.querySelector('input').value.trim()).filter(Boolean);
-  const e={id:crypto.randomUUID(),projectId:db.projectId,date:date.value,start:start.value,end:end.value,break:break.value,minutes:Math.max(0,minutesBetween(start.value,end.value)-minutesBetween('00:00',break.value)),note:note.value.trim(),materials:mats,tools};
-  db.entries.push(e); persist(); alert('Arbeitstag gespeichert.'); resetEntry(); show('home');
-}
-function resetEntry(){date.value=new Date().toISOString().slice(0,10);start.value='07:00';end.value='15:00';break.value='01:00';note.value='';materials.innerHTML='';tools.innerHTML='';calc();}
-function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
 function render(){
-  renderProjects();
-  const es=db.entries.filter(e=>e.projectId===db.projectId); const total=es.reduce((a,e)=>a+e.minutes,0);
-  totalHours.textContent=fmtMinutes(total);entryCount.textContent=`${es.length} ${es.length===1?'Tag':'Tage'}`;
-  recent.innerHTML=es.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5).map(e=>`<div class="item"><b>${e.date}</b> · ${fmtMinutes(e.minutes)}<div class="muted">${e.materials.map(m=>`${esc(m.qty)} ${esc(m.unit)} ${esc(m.name)}`).join(', ')||'Kein Material'}</div></div>`).join('')||'<div class="empty">Noch keine Einträge.</div>';
-  renderOverview(); renderLists();
+ renderProjects();
+ var es=db.entries.filter(function(e){return e.projectId===db.projectId});
+ var total=es.reduce(function(n,e){return n+e.minutes},0);
+ $("totalHours").textContent=fmt(total);$("entryCount").textContent=es.length+" "+(es.length===1?"Tag":"Tage");
+ $("recent").innerHTML=es.slice().sort(function(a,b){return b.date.localeCompare(a.date)}).slice(0,5).map(function(e){
+   return '<div class="item"><b>'+esc(e.date)+'</b> · '+fmt(e.minutes)+'<div class="muted">'+(e.materials.length?e.materials.map(function(m){return esc(m.qty)+" "+esc(m.unit)+" "+esc(m.name)}).join(", "):"Kein Material")+"</div></div>";
+ }).join("")||'<div class="muted" style="padding:12px 0">Noch keine Einträge.</div>';
+ renderOverview();renderMaster();
 }
 function renderOverview(){
-  let pid=window.ovProject||db.projectId; const es=db.entries.filter(e=>e.projectId===pid).sort((a,b)=>b.date.localeCompare(a.date));
-  ovHours.textContent=fmtMinutes(es.reduce((a,e)=>a+e.minutes,0));ovDays.textContent=es.length;
-  days.innerHTML=es.map(e=>`<div class="item"><b>${e.date}</b> · ${e.start}–${e.end} · Pause ${e.break}<br><strong>${fmtMinutes(e.minutes)}</strong>${e.note?`<div class="muted">${esc(e.note)}</div>`:''}</div>`).join('')||'<div class="empty">Noch keine Einträge.</div>';
-  const mm={};es.forEach(e=>e.materials.forEach(m=>{let k=m.name+'|'+m.unit;mm[k]=(mm[k]||0)+m.qty;}));
-  materialSummary.innerHTML=Object.entries(mm).map(([k,v])=>{let [n,u]=k.split('|');return `<div class="item"><b>${esc(v)} ${esc(u)}</b> ${esc(n)}</div>`}).join('')||'<div class="empty">Noch kein Material.</div>';
-  const tt={};es.forEach(e=>e.tools.forEach(t=>tt[t]=(tt[t]||0)+1));
-  toolSummary.innerHTML=Object.entries(tt).map(([n,v])=>`<div class="item"><b>${esc(n)}</b><span class="muted"> · ${v} ${v===1?'Tag':'Tage'}</span></div>`).join('')||'<div class="empty">Noch kein Werkzeug.</div>';
+ var pid=window.ovProject||db.projectId,es=db.entries.filter(function(e){return e.projectId===pid}).sort(function(a,b){return b.date.localeCompare(a.date)});
+ $("ovHours").textContent=fmt(es.reduce(function(n,e){return n+e.minutes},0));$("ovDays").textContent=es.length;
+ $("days").innerHTML=es.map(function(e){return '<div class="item"><b>'+esc(e.date)+'</b> · '+esc(e.start)+'–'+esc(e.end)+' · Pause '+esc(e.break)+'<br><b>'+fmt(e.minutes)+'</b>'+(e.note?'<div class="muted">'+esc(e.note)+'</div>':"")+"</div>"}).join("")||'<div class="muted">Noch keine Einträge.</div>';
+ var mm={};es.forEach(function(e){e.materials.forEach(function(m){var k=m.name+"|"+m.unit;mm[k]=(mm[k]||0)+m.qty})});
+ $("materialSummary").innerHTML=Object.keys(mm).map(function(k){var x=k.split("|");return '<div class="item"><b>'+esc(mm[k])+" "+esc(x[1])+"</b> "+esc(x[0])+"</div>"}).join("")||'<div class="muted">Noch kein Material.</div>';
+ var tt={};es.forEach(function(e){e.tools.forEach(function(t){tt[t]=(tt[t]||0)+1})});
+ $("toolSummary").innerHTML=Object.keys(tt).map(function(k){return '<div class="item"><b>'+esc(k)+'</b> · '+tt[k]+' '+(tt[k]===1?"Tag":"Tage")+"</div>"}).join("")||'<div class="muted">Noch kein Werkzeug.</div>';
 }
-function renderLists(){
-  document.getElementById('matlist')?.remove();document.getElementById('toollist')?.remove();
-  const ml=document.createElement('datalist');ml.id='matlist';ml.innerHTML=db.materials.map(x=>`<option value="${esc(x)}">`).join('');document.body.appendChild(ml);
-  const tl=document.createElement('datalist');tl.id='toollist';tl.innerHTML=db.tools.map(x=>`<option value="${esc(x)}">`).join('');document.body.appendChild(tl);
-  materialMaster.value=db.materials.join(', ');toolMaster.value=db.tools.join(', ');
-}
-function saveMaster(){db.materials=materialMaster.value.split(',').map(x=>x.trim()).filter(Boolean);db.tools=toolMaster.value.split(',').map(x=>x.trim()).filter(Boolean);persist();render();alert('Gespeichert.');}
+function renderMaster(){$("materialMaster").value=db.materials.join(", ");$("toolMaster").value=db.tools.join(", ")}
 function show(id){
-  ['home','entry','overview','settings'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==id));
-  ['home','entry','overview','settings'].forEach(x=>document.getElementById('nav-'+x).classList.toggle('active',x===id));
-  if(id==='entry' && !date.value)resetEntry(); if(id==='overview')renderOverview();
+ ["home","entry","overview","settings"].forEach(function(x){$(x).classList.toggle("hidden",x!==id)});
+ ["navHome","navEntry","navOverview","navSettings"].forEach(function(x){$(x).classList.remove("active")});
+ $("nav"+id.charAt(0).toUpperCase()+id.slice(1)).classList.add("active");
+ if(id==="overview")renderOverview();
 }
-date.value=new Date().toISOString().slice(0,10); render(); show('home'); calc();
+function addProject(){
+ var n=prompt("Name der Baustelle:");
+ if(n&&n.trim()){var p={id:uid(),name:n.trim()};db.projects.push(p);db.projectId=p.id;save();render()}
+}
+function addMaterial(){
+ var d=document.createElement("div");d.className="row";
+ d.innerHTML='<input class="matName grow" placeholder="Material"><input class="matQty" type="number" min="0" step="0.01" placeholder="Menge" style="max-width:90px"><input class="matUnit" placeholder="Einheit" style="max-width:78px"><button class="danger remove">×</button>';
+ d.querySelector(".remove").onclick=function(){d.remove()};$("materials").appendChild(d);
+}
+function addTool(){
+ var d=document.createElement("div");d.className="row";
+ d.innerHTML='<input class="toolName grow" placeholder="Werkzeug"><button class="danger remove">×</button>';
+ d.querySelector(".remove").onclick=function(){d.remove()};$("tools").appendChild(d);
+}
+function resetEntry(){
+ var now=new Date(), local=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);
+ $("date").value=local;$("start").value="07:00";$("end").value="15:00";$("breakTime").value="01:00";$("note").value="";$("materials").innerHTML="";$("tools").innerHTML="";calc()
+}
+function saveEntry(){
+ var mats=[].slice.call(document.querySelectorAll("#materials .row")).map(function(r){return{name:r.querySelector(".matName").value.trim(),qty:Number(r.querySelector(".matQty").value)||0,unit:r.querySelector(".matUnit").value.trim()}}).filter(function(x){return x.name});
+ var tools=[].slice.call(document.querySelectorAll("#tools .row")).map(function(r){return r.querySelector(".toolName").value.trim()}).filter(Boolean);
+ db.entries.push({id:uid(),projectId:db.projectId,date:$("date").value,start:$("start").value,end:$("end").value,break:$("breakTime").value,minutes:workMins(),note:$("note").value.trim(),materials:mats,tools:tools});
+ save();alert("Arbeitstag gespeichert.");resetEntry();render();show("home");
+}
+$("projectSelect").onchange=function(){db.projectId=this.value;save();render()};
+$("overviewProject").onchange=function(){window.ovProject=this.value;renderOverview()};
+$("addProjectBtn").onclick=addProject;$("newEntryBtn").onclick=function(){resetEntry();show("entry")};
+$("addMaterialBtn").onclick=addMaterial;$("addToolBtn").onclick=addTool;$("saveEntryBtn").onclick=saveEntry;
+$("start").oninput=calc;$("end").oninput=calc;$("breakTime").oninput=calc;
+$("saveMasterBtn").onclick=function(){db.materials=$("materialMaster").value.split(",").map(function(x){return x.trim()}).filter(Boolean);db.tools=$("toolMaster").value.split(",").map(function(x){return x.trim()}).filter(Boolean);save();alert("Gespeichert.")};
+$("navHome").onclick=function(){show("home")};$("navEntry").onclick=function(){resetEntry();show("entry")};$("navOverview").onclick=function(){show("overview")};$("navSettings").onclick=function(){show("settings")};
+resetEntry();render();show("home");
+})();
 </script>
-<script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js');</script></body>
+</body>
 </html>
