@@ -104,6 +104,16 @@ nav button{flex:1;background:#f3f4f6;padding:9px 3px;font-size:13px}nav button.a
 <label>Werkzeug (Komma getrennt)</label><input id="toolMaster" placeholder="Bohrhammer, Akkuschrauber">
 <button class="primary" style="margin-top:14px" id="saveMaster">Speichern</button>
 </div>
+<div class="card">
+<h2 style="margin-top:0">💾 Datensicherung</h2>
+<p class="muted">Sichere deine Baustellen, Arbeitstage, Materialien, Werkzeuge und Abrechnungen als Datei. Besonders wichtig, wenn du die App einmal vom iPhone löschst.</p>
+<div class="actions">
+<button class="secondary" id="exportData">Daten sichern</button>
+<button class="secondary" id="importDataBtn">Daten wiederherstellen</button>
+</div>
+<input id="importData" type="file" accept=".json,application/json" class="hidden">
+<div class="muted small" style="margin-top:8px">Tipp: Die Sicherungsdatei in „Dateien“ oder iCloud Drive aufbewahren.</div>
+</div>
 </section>
 </main>
 
@@ -145,8 +155,34 @@ if(!db.projects.length)db.projects=[{id:"p1",name:"Meine Baustelle"}];
 if(!db.projectId)db.projectId=db.projects[0].id;
 localStorage.setItem(KEY,JSON.stringify(db));
 
+
+/* Dauerhafte lokale Datenbank: IndexedDB. localStorage bleibt als Fallback/Migrationsquelle. */
+var IDB_NAME="BaustellenzeitDB", IDB_STORE="daten", IDB_KEY="hauptdaten", idb=null;
+function openDataDB(done){
+ try{
+  if(!window.indexedDB){done(null);return;}
+  var req=indexedDB.open(IDB_NAME,1);
+  req.onupgradeneeded=function(ev){var d=ev.target.result;if(!d.objectStoreNames.contains(IDB_STORE))d.createObjectStore(IDB_STORE);};
+  req.onsuccess=function(){idb=req.result;done(idb);};
+  req.onerror=function(){done(null);};
+ }catch(e){done(null);}
+}
+function idbRead(done){
+ if(!idb){done(null);return;}
+ try{var tx=idb.transaction(IDB_STORE,"readonly"),r=tx.objectStore(IDB_STORE).get(IDB_KEY);
+  r.onsuccess=function(){done(r.result||null);};r.onerror=function(){done(null);};
+ }catch(e){done(null);}
+}
+function idbWrite(data){
+ if(!idb)return;
+ try{var tx=idb.transaction(IDB_STORE,"readwrite");tx.objectStore(IDB_STORE).put(data,IDB_KEY);}catch(e){}
+}
+function persistAll(){
+ localStorage.setItem(KEY,JSON.stringify(db));
+ idbWrite(db);
+}
 function $(id){return document.getElementById(id);}
-function save(){localStorage.setItem(KEY,JSON.stringify(db));}
+function save(){persistAll();}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c];});}
 function fmt(m){m=Math.max(0,Math.round(Number(m)||0));return Math.floor(m/60)+":"+String(m%60).padStart(2,"0")+" h";}
@@ -352,15 +388,57 @@ $("start").oninput=$("end").oninput=$("pause").oninput=function(){$("calc").text
 $("saveEntry").onclick=saveEntry;$("cancelEntry").onclick=function(){resetEntry();show("home");};
 $("newBill").onclick=openBillingModal;$("closeModal").onclick=function(){$("modal").classList.add("hidden");};$("createBill").onclick=createBilling;
 $("saveMaster").onclick=function(){db.materials=$("matMaster").value.split(",").map(function(x){return x.trim();}).filter(Boolean);db.tools=$("toolMaster").value.split(",").map(function(x){return x.trim();}).filter(Boolean);save();render();alert("Gespeichert. Ab jetzt erscheinen die Einträge als Auswahl.");};
+$("exportData").onclick=exportData;
+$("importDataBtn").onclick=function(){$("importData").click();};
+$("importData").onchange=function(){if(this.files&&this.files[0])importData(this.files[0]);this.value="";};
 
 var dl=document.createElement("div");dl.innerHTML='<datalist id="materialList"></datalist><datalist id="toolList"></datalist><datalist id="unitList"><option value="Stk."><option value="kg"><option value="Sack"><option value="m"><option value="m²"><option value="m³"><option value="l"><option value="Stk"></datalist>';document.body.appendChild(dl);
 function refreshLists(){
  $("materialList").innerHTML=db.materials.map(function(x){return '<option value="'+esc(x)+'">';}).join("");
  $("toolList").innerHTML=db.tools.map(function(x){return '<option value="'+esc(x)+'">';}).join("");
 }
+
+function exportData(){
+ var payload={app:"Baustellenzeit",version:1,exportedAt:new Date().toISOString(),data:db};
+ var blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+ var url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="baustellenzeit-sicherung-"+new Date().toISOString().slice(0,10)+".json";
+ document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+function importData(file){
+ if(!file)return;
+ var reader=new FileReader();
+ reader.onload=function(){
+  try{
+   var p=JSON.parse(reader.result), incoming=p&&p.data?p.data:p;
+   if(!incoming||!incoming.projects||!incoming.entries)throw new Error("Ungültige Sicherungsdatei");
+   if(!confirm("Die aktuelle App-Datenbank wird durch die Sicherung ersetzt. Fortfahren?"))return;
+   db=incoming;
+   db.projects=db.projects||[];db.entries=db.entries||[];db.billings=db.billings||[];db.materials=db.materials||[];db.tools=db.tools||[];
+   if(!db.projects.length)db.projects=[{id:"p1",name:"Meine Baustelle"}];
+   if(!db.projectId)db.projectId=db.projects[0].id;
+   persistAll();render();show("home");alert("Sicherung erfolgreich wiederhergestellt.");
+  }catch(e){alert("Die Datei konnte nicht wiederhergestellt werden. Bitte eine Baustellenzeit-Sicherung auswählen.");}
+ };
+ reader.readAsText(file);
+}
 var oldRenderMaster=renderMaster;renderMaster=function(){oldRenderMaster();refreshLists();};
-resetEntry();render();show("home");
-setTimeout(function(){$("splash").classList.add("hide");setTimeout(function(){var x=$("splash");if(x)x.remove();},400);},450);
+resetEntry();
+openDataDB(function(){
+ idbRead(function(saved){
+  if(saved){
+   db=saved;
+   db.projects=db.projects||[];db.entries=db.entries||[];db.billings=db.billings||[];db.materials=db.materials||[];db.tools=db.tools||[];
+   if(!db.projects.length)db.projects=[{id:"p1",name:"Meine Baustelle"}];
+   if(!db.projectId)db.projectId=db.projects[0].id;
+  }else{
+   idbWrite(db); /* vorhandene localStorage-Daten werden einmalig übernommen */
+  }
+  localStorage.setItem(KEY,JSON.stringify(db));
+  render();show("home");
+  setTimeout(function(){$("splash").classList.add("hide");setTimeout(function(){var x=$("splash");if(x)x.remove();},400);},450);
+ });
+});
 })();
 </script>
 </body>
