@@ -45,7 +45,7 @@ if(!db)db={projects:[{id:"p1",name:"Meine Baustelle"}],projectId:"p1",entries:[]
 db.billings=db.billings||[];db.entries=db.entries||[];localStorage.setItem(KEY,JSON.stringify(db));
 function $(x){return document.getElementById(x)}function save(){localStorage.setItem(KEY,JSON.stringify(db))}function uid(){return Date.now()+Math.random().toString(36).slice(2)}
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]})}
-function diff(a,b){var x=a.split(":"),y=b.split(":"),m=+x[0]*60++x[1],n=+y[0]*60++y[1];if(n<m)n+=1440;return n-m}function fmt(m){return Math.floor(m/60)+":"+String(Math.round(m%60)).padStart(2,"0")+" h"}function work(){return Math.max(0,diff($("start").value,$("end").value)-diff("00:00",$("pause").value))}
+function diff(a,b){var x=a.split(":"),y=b.split(":"),m=(+x[0])*60+(+x[1]),n=(+y[0])*60+(+y[1]);if(n<m)n+=1440;return n-m}function fmt(m){return Math.floor(m/60)+":"+String(Math.round(m%60)).padStart(2,"0")+" h"}function work(){return Math.max(0,diff($("start").value,$("end").value)-diff("00:00",$("pause").value))}
 function projects(){var h=db.projects.map(function(p){return'<option value="'+p.id+'">'+esc(p.name)+'</option>'}).join("");$("projectSelect").innerHTML=h;$("ovProject").innerHTML=h;$("billProject").innerHTML=h;$("projectSelect").value=db.projectId;$("ovProject").value=window.ovP||db.projectId;$("billProject").value=window.billP||db.projectId}
 function entries(pid){return db.entries.filter(function(e){return e.projectId===pid})}
 function billedMinutes(pid){var n=0;db.billings.filter(function(b){return b.projectId===pid}).forEach(function(b){n+=b.minutes});return n}
