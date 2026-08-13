@@ -40,7 +40,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid 
 <div id="modal" class="modal hidden"><div class="sheet"><h2 style="margin-top:0">Neue Abrechnung</h2><div id="billChoices"></div><button class="primary" id="createBill" style="margin-top:14px">Ausgewähltes abrechnen</button><button class="secondary" id="closeModal" style="width:100%;margin-top:8px">Abbrechen</button></div></div>
 <script>
 (function(){
-"use strict";var KEY="baustellenzeit_v3",db=JSON.parse(localStorage.getItem(KEY)||"null");
+"use strict";var KEY="baustellenzeit_v4",db=JSON.parse(localStorage.getItem(KEY)||"null");
 if(!db)db={projects:[{id:"p1",name:"Meine Baustelle"}],projectId:"p1",entries:[],billings:[],materials:["Zement","Beton","Schrauben","Dübel","Holz","Kabel"],tools:["Bohrhammer","Akkuschrauber","Winkelschleifer","Schaufel"]};
 db.billings=db.billings||[];db.entries=db.entries||[];localStorage.setItem(KEY,JSON.stringify(db));
 function $(x){return document.getElementById(x)}function save(){localStorage.setItem(KEY,JSON.stringify(db))}function uid(){return Date.now()+Math.random().toString(36).slice(2)}
