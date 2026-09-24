@@ -38,7 +38,11 @@ nav button{flex:1;background:#f3f4f6;padding:9px 3px;font-size:13px}nav button.a
 .checkrow{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #eee}.checkrow input{width:22px;height:22px}.checkrow .name{flex:1}
 .small{font-size:13px}.line-total{font-weight:800}.subtle{background:#f9fafb;padding:10px;border-radius:12px;margin-top:10px}
 @media(min-width:681px){.modal{align-items:center}.sheet{border-radius:20px}}
+.cloud-status{padding:10px 12px;border-radius:12px;background:#f3f4f6;font-size:14px;margin-top:10px}.cloud-ok{background:#dcfce7;color:#166534}.cloud-warn{background:#fef3c7;color:#92400e}.cloud-error{background:#fee2e2;color:#991b1b}
+.authbox{background:#f9fafb;border-radius:14px;padding:12px;margin-top:10px}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 </head>
 <body>
 <div class="splash" id="splash"><div class="splash-inner"><div class="app-logo">🏗️</div><div class="splash-title">Baustellenzeit</div><div class="splash-sub">Stunden · Material · Werkzeug</div></div></div>
@@ -105,8 +109,19 @@ nav button{flex:1;background:#f3f4f6;padding:9px 3px;font-size:13px}nav button.a
 <button class="primary" style="margin-top:14px" id="saveMaster">Speichern</button>
 </div>
 <div class="card">
+<h2 style="margin-top:0">☁️ Cloud-Synchronisation</h2>
+<p class="muted">Mit einem Konto kannst du dieselben Baustellen auf iPhone, iPad und PC verwenden. Die Daten liegen dann in der Cloud und bleiben von App-Updates getrennt.</p>
+<div id="cloudStatus" class="cloud-status cloud-warn">Noch nicht angemeldet – lokale Daten werden verwendet.</div>
+<div id="authBox" class="authbox">
+<label>E-Mail</label><input id="cloudEmail" type="email" autocomplete="email" placeholder="name@beispiel.at">
+<label>Passwort</label><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Mindestens 6 Zeichen">
+<div class="actions"><button class="primary" id="cloudLogin">Anmelden</button><button class="secondary" id="cloudSignup">Konto erstellen</button></div>
+<button class="danger" id="cloudLogout" style="display:none;width:100%;margin-top:8px">Abmelden</button>
+</div>
+</div>
+<div class="card">
 <h2 style="margin-top:0">💾 Datensicherung</h2>
-<p class="muted">Sichere deine Baustellen, Arbeitstage, Materialien, Werkzeuge und Abrechnungen als Datei. Besonders wichtig, wenn du die App einmal vom iPhone löschst.</p>
+<p class="muted">Sichere deine Baustellen, Arbeitstage, Materialien, Werkzeuge und Abrechnungen als Datei. Die Cloud ist die Hauptspeicherung. Der Export bleibt zusätzlich als unabhängige Sicherung verfügbar.</p>
 <div class="actions">
 <button class="secondary" id="exportData">Daten sichern</button>
 <button class="secondary" id="importDataBtn">Daten wiederherstellen</button>
@@ -134,6 +149,8 @@ nav button{flex:1;background:#f3f4f6;padding:9px 3px;font-size:13px}nav button.a
 <script>
 (function(){
 "use strict";
+
+var cloudClient=null, cloudUser=null, cloudReady=false, cloudSyncing=false, cloudLoading=false;
 
 var KEY="baustellenzeit_data";
 var LEGACY_KEYS=["baustellenzeit_data","baustellenzeit_v7_app","baustellenzeit_v6","baustellenzeit_v7","baustellenzeit_v5","baustellenzeit_v4","baustellenzeit_v3","baustellenzeit_v2","baustellenzeit_v1"];
@@ -180,6 +197,49 @@ function idbWrite(data){
 function persistAll(){
  localStorage.setItem(KEY,JSON.stringify(db));
  idbWrite(db);
+ if(cloudReady && cloudUser && !cloudLoading){ syncToCloud(); }
+}
+async function syncToCloud(){
+ if(!cloudClient || !cloudUser || cloudSyncing) return;
+ cloudSyncing=true;
+ try{
+  var r=await cloudClient.from("user_data").upsert({user_id:cloudUser.id,data:db,updated_at:new Date().toISOString()});
+  if(r.error) throw r.error;
+  setCloudStatus("Cloud synchronisiert", "ok");
+ }catch(e){
+  console.error(e); setCloudStatus("Cloud-Synchronisation fehlgeschlagen – lokale Daten bleiben erhalten.", "error");
+ }finally{cloudSyncing=false;}
+}
+function setCloudStatus(msg,type){
+ var el=$("cloudStatus"); if(!el)return; el.textContent=msg; el.className="cloud-status "+(type==="ok"?"cloud-ok":type==="error"?"cloud-error":"cloud-warn");
+}
+async function loadCloudData(){
+ if(!cloudClient || !cloudUser)return;
+ cloudLoading=true;
+ try{
+  var r=await cloudClient.from("user_data").select("data").eq("user_id",cloudUser.id).maybeSingle();
+  if(r.error) throw r.error;
+  if(r.data && r.data.data){
+   db=r.data.data; normalizeDb(); persistLocalOnly(); setCloudStatus("Cloud verbunden · Daten geladen", "ok"); render();
+  }else{
+   var hasLocal=db.entries.length || db.projects.some(function(p){return p.name!=="Meine Baustelle";}) || db.billings.length;
+   var upload=!hasLocal || confirm("Für dieses Konto gibt es noch keine Cloud-Daten. Sollen die aktuellen Daten dieses Geräts in die Cloud übernommen werden?");
+   if(upload){
+    var up=await cloudClient.from("user_data").upsert({user_id:cloudUser.id,data:db,updated_at:new Date().toISOString()});
+    if(up.error)throw up.error;
+    setCloudStatus("Cloud verbunden · Daten gespeichert", "ok");
+   }else{
+    setCloudStatus("Cloud verbunden · noch keine Daten gespeichert", "ok");
+   }
+  }
+ }catch(e){
+  console.error(e); setCloudStatus("Cloud konnte nicht geladen werden. Bitte Supabase-Einstellungen prüfen.", "error");
+ }finally{cloudLoading=false;}
+}
+function persistLocalOnly(){localStorage.setItem(KEY,JSON.stringify(db));idbWrite(db);}
+function normalizeDb(){
+ db=db||{}; db.projects=db.projects||[];db.entries=db.entries||[];db.billings=db.billings||[];db.materials=db.materials||[];db.tools=db.tools||[];
+ if(!db.projects.length)db.projects=[{id:"p1",name:"Meine Baustelle"}]; if(!db.projectId)db.projectId=db.projects[0].id;
 }
 function $(id){return document.getElementById(id);}
 function save(){persistAll();}
@@ -198,6 +258,38 @@ function billedMaterial(pid){
  });
  return out;
 }
+async function initCloud(){
+ if(!window.supabase || !window.BAUSTELLENZEIT_SUPABASE_URL || !window.BAUSTELLENZEIT_SUPABASE_ANON_KEY){
+  setCloudStatus("Cloud noch nicht eingerichtet – lokale Daten werden verwendet.", "warn"); return;
+ }
+ try{
+  cloudClient=window.supabase.createClient(window.BAUSTELLENZEIT_SUPABASE_URL,window.BAUSTELLENZEIT_SUPABASE_ANON_KEY);
+  var s=await cloudClient.auth.getSession();
+  if(s.data && s.data.session){ await onCloudLogin(s.data.session.user); }
+  cloudClient.auth.onAuthStateChange(function(event,session){
+   setTimeout(function(){ if(session) onCloudLogin(session.user); else onCloudLogout(); },0);
+  });
+ }catch(e){console.error(e);setCloudStatus("Cloud-Konfiguration ungültig.","error");}
+}
+async function onCloudLogin(user){
+ cloudUser=user; cloudReady=false;
+ $("cloudEmail").value=user.email||""; $("cloudPassword").value=""; $("cloudLogin").style.display="none"; $("cloudSignup").style.display="none"; $("cloudLogout").style.display="block";
+ setCloudStatus("Cloud wird geladen …","warn"); await loadCloudData(); cloudReady=true; render();
+}
+function onCloudLogout(){cloudUser=null;cloudReady=false;$("cloudLogin").style.display="block";$("cloudSignup").style.display="block";$("cloudLogout").style.display="none";setCloudStatus("Abgemeldet – lokale Daten werden verwendet.","warn");}
+async function cloudLogin(){
+ if(!cloudClient){alert("Die Cloud ist noch nicht eingerichtet. Bitte supabase-config.js ausfüllen.");return;}
+ var email=$("cloudEmail").value.trim(),password=$("cloudPassword").value; if(!email||!password){alert("Bitte E-Mail und Passwort eingeben.");return;}
+ var r=await cloudClient.auth.signInWithPassword({email:email,password:password}); if(r.error)alert(r.error.message);
+}
+async function cloudSignup(){
+ if(!cloudClient){alert("Die Cloud ist noch nicht eingerichtet. Bitte supabase-config.js ausfüllen.");return;}
+ var email=$("cloudEmail").value.trim(),password=$("cloudPassword").value; if(!email||!password){alert("Bitte E-Mail und Passwort eingeben.");return;}
+ if(password.length<6){alert("Das Passwort muss mindestens 6 Zeichen haben.");return;}
+ var r=await cloudClient.auth.signUp({email:email,password:password}); if(r.error)alert(r.error.message); else alert("Konto erstellt. Falls E-Mail-Bestätigung aktiviert ist, bitte zuerst die Bestätigungs-Mail öffnen.");
+}
+async function cloudLogout(){if(cloudClient)await cloudClient.auth.signOut();}
+
 function projectOptions(){
  return db.projects.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>';}).join("");
 }
@@ -392,6 +484,8 @@ $("exportData").onclick=exportData;
 $("importDataBtn").onclick=function(){$("importData").click();};
 $("importData").onchange=function(){if(this.files&&this.files[0])importData(this.files[0]);this.value="";};
 
+$("cloudLogin").onclick=cloudLogin; $("cloudSignup").onclick=cloudSignup; $("cloudLogout").onclick=cloudLogout;
+
 var dl=document.createElement("div");dl.innerHTML='<datalist id="materialList"></datalist><datalist id="toolList"></datalist><datalist id="unitList"><option value="Stk."><option value="kg"><option value="Sack"><option value="m"><option value="m²"><option value="m³"><option value="l"><option value="Stk"></datalist>';document.body.appendChild(dl);
 function refreshLists(){
  $("materialList").innerHTML=db.materials.map(function(x){return '<option value="'+esc(x)+'">';}).join("");
@@ -426,16 +520,9 @@ var oldRenderMaster=renderMaster;renderMaster=function(){oldRenderMaster();refre
 resetEntry();
 openDataDB(function(){
  idbRead(function(saved){
-  if(saved){
-   db=saved;
-   db.projects=db.projects||[];db.entries=db.entries||[];db.billings=db.billings||[];db.materials=db.materials||[];db.tools=db.tools||[];
-   if(!db.projects.length)db.projects=[{id:"p1",name:"Meine Baustelle"}];
-   if(!db.projectId)db.projectId=db.projects[0].id;
-  }else{
-   idbWrite(db); /* vorhandene localStorage-Daten werden einmalig übernommen */
-  }
-  localStorage.setItem(KEY,JSON.stringify(db));
-  render();show("home");
+  if(saved){db=saved;normalizeDb();}else{idbWrite(db);normalizeDb();}
+  persistLocalOnly(); render();show("home");
+  initCloud();
   setTimeout(function(){$("splash").classList.add("hide");setTimeout(function(){var x=$("splash");if(x)x.remove();},400);},450);
  });
 });
