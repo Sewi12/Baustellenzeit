@@ -50,18 +50,29 @@ nav button{flex:1;background:#f3f4f6;padding:9px 3px;font-size:13px}nav button.a
 <body>
 <div class="splash" id="splash"><div class="splash-inner"><div class="app-logo">🏗️</div><div class="splash-title">Baustellenzeit</div><div class="splash-sub">Stunden · Material · Werkzeug</div></div></div>
 <div class="app">
-<header><div style="display:flex;align-items:center;gap:11px"><div style="font-size:28px">🏗️</div><div><h1>Baustellenzeit</h1><p>Stunden · Material · Werkzeug · Abrechnung</p></div></div></header>
+<header><div style="display:flex;align-items:center;gap:11px"><div style="font-size:28px">🏗️</div><div><h1>Baustellenzeit</h1><p>Stunden · Material · Werkzeug · Abrechnung</p><div style="font-size:11px;opacity:.45;margin-top:4px">v9.2</div></div></div></header>
 <main>
 
 <section id="home">
-<div class="card"><label>Baustelle</label><div class="row"><select id="projectSelect" class="grow"></select><button class="secondary" id="addProject">＋</button></div></div>
-<div class="totalgrid">
-<div class="stat"><span class="muted">Gesamtstunden</span><div class="big" id="totalH">0:00 h</div></div>
-<div class="stat"><span class="muted">Noch offen</span><div class="big" id="openH">0:00 h</div></div>
+<div class="card" style="padding:18px">
+  <div class="muted small" style="margin-bottom:5px">AKTUELLE BAUSTELLE</div>
+  <div class="row" style="margin:0"><select id="projectSelect" class="grow" style="font-size:17px;font-weight:700"><option>Baustelle auswählen</option></select><button class="secondary" id="addProject" style="min-width:52px;font-size:22px">＋</button></div>
+</div>
+<div class="totalgrid home-stats">
+  <div class="stat"><span class="muted">Gesamt</span><div class="big" id="totalH">0:00 h</div></div>
+  <div class="stat"><span class="muted">Abgerechnet</span><div class="big" id="homeBilled">0:00 h</div></div>
+  <div class="stat"><span class="muted">Offen</span><div class="big" id="openH">0:00 h</div></div>
 </div>
 <div style="height:12px"></div>
-<button class="primary" id="newEntry">＋ Arbeitstag erfassen</button>
-<div class="card" style="margin-top:14px"><b>Letzte Einträge</b><div id="recent"></div></div>
+<button class="primary" id="newEntry" style="font-size:17px;padding:15px">＋ Arbeitstag erfassen</button>
+<div class="home-quick" style="display:flex;gap:10px;margin-top:10px">
+  <button class="secondary" id="homeOverview" style="flex:1">📊 Übersicht</button>
+  <button class="secondary" id="homeBilling" style="flex:1">💶 Abrechnung</button>
+</div>
+<div class="card" style="margin-top:14px;background:#f9fafb">
+  <div style="font-weight:800">Schnellüberblick</div>
+  <div id="homeStatusText" class="muted" style="margin-top:5px">Baustelle auswählen</div>
+</div>
 </section>
 
 <section id="entry" class="hidden">
@@ -89,6 +100,7 @@ nav button{flex:1;background:#f3f4f6;padding:9px 3px;font-size:13px}nav button.a
 <section id="overview" class="hidden">
 <div class="card"><h2 style="margin-top:0">Übersicht</h2><label>Baustelle</label><select id="ovProject"></select>
 <div class="totalgrid" style="margin-top:12px"><div class="stat"><span class="muted">Gesamt</span><div id="ovTotal" class="big">0:00 h</div></div><div class="stat"><span class="muted">Abgerechnet</span><div id="ovBilled" class="big">0:00 h</div></div><div class="stat"><span class="muted">Offen</span><div id="ovOpen" class="big">0:00 h</div></div></div></div>
+<div class="card"><h3 style="margin-top:0">Letzte 3 Einträge</h3><div id="recentOverview"></div></div>
 <div class="card"><h3 style="margin-top:0">Arbeitstage</h3><div class="grid"><div><label>Von</label><input id="ovFrom" type="date"></div><div><label>Bis</label><input id="ovTo" type="date"></div></div><button class="secondary" id="ovReset" style="width:100%;margin-top:8px">Zeitraum zurücksetzen</button><div id="days" style="margin-top:10px"></div></div>
 <div class="card"><h3 style="margin-top:0">Material gesamt</h3><div id="matSum"></div></div>
 <div class="card"><h3 style="margin-top:0">Werkzeug</h3><div id="toolSum"></div></div>
@@ -473,6 +485,8 @@ $("billProject").onchange=function(){window.billP=this.value;renderBilling();};
 $("addProject").onclick=addProject;
 $("newEntry").onclick=function(){resetEntry();show("entry");};
 $("nHome").onclick=function(){show("home");};$("nEntry").onclick=function(){resetEntry();show("entry");};$("nOverview").onclick=function(){show("overview");};$("nBilling").onclick=function(){show("billing");};$("nSettings").onclick=function(){show("settings");};
+$("homeOverview").onclick=function(){show("overview");};
+$("homeBilling").onclick=function(){show("billing");};
 $("addMat").onclick=function(){addMaterial();};$("addTool").onclick=function(){addTool();};
 $("start").oninput=$("end").oninput=$("pause").oninput=function(){$("calc").textContent=fmt(currentWork());};
 $("saveEntry").onclick=saveEntry;$("cancelEntry").onclick=function(){resetEntry();show("home");};
@@ -482,8 +496,6 @@ $("exportData").onclick=exportData;
 $("importDataBtn").onclick=function(){$("importData").click();};
 $("importData").onchange=function(){if(this.files&&this.files[0])importData(this.files[0]);this.value="";};
 
-$("homeOverview").onclick=function(){show("overview");};
-$("homeBilling").onclick=function(){show("billing");};
 $("cloudLogin").onclick=cloudLogin; $("cloudSignup").onclick=cloudSignup; $("cloudLogout").onclick=cloudLogout;
 
 var dl=document.createElement("div");dl.innerHTML='<datalist id="materialList"></datalist><datalist id="toolList"></datalist><datalist id="unitList"><option value="Stk."><option value="kg"><option value="Sack"><option value="m"><option value="m²"><option value="m³"><option value="l"><option value="Stk"></datalist>';document.body.appendChild(dl);
@@ -523,7 +535,7 @@ function setupUpdates(){
  navigator.serviceWorker.register('./service-worker.js').then(function(reg){
   reg.update();
   reg.addEventListener('updatefound',function(){var w=reg.installing;if(!w)return;w.addEventListener('statechange',function(){if(w.state==='installed'&&navigator.serviceWorker.controller){$("updateModal").classList.remove("hidden");}});});
-  $("doUpdate").onclick=function(){if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'});}else{reg.update();setTimeout(function(){location.reload();},1200);}};
+  $("doUpdate").onclick=function(){if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'});}else{reg.update();$("doUpdate").textContent="Update wird geladen…";$("doUpdate").disabled=true;}};
   $("laterUpdate").onclick=function(){$("updateModal").classList.add("hidden");};
  }).catch(function(e){console.warn('Service Worker',e);});
  navigator.serviceWorker.addEventListener('controllerchange',function(){if(!window.__reloading){window.__reloading=true;location.reload();}});
