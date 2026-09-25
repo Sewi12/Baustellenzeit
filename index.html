@@ -40,6 +40,9 @@ nav button{flex:1;background:#f3f4f6;padding:9px 3px;font-size:13px}nav button.a
 @media(min-width:681px){.modal{align-items:center}.sheet{border-radius:20px}}
 .cloud-status{padding:10px 12px;border-radius:12px;background:#f3f4f6;font-size:14px;margin-top:10px}.cloud-ok{background:#dcfce7;color:#166534}.cloud-warn{background:#fef3c7;color:#92400e}.cloud-error{background:#fee2e2;color:#991b1b}
 .authbox{background:#f9fafb;border-radius:14px;padding:12px;margin-top:10px}
+
+.home-project{padding-bottom:16px}.home-stats{grid-template-columns:repeat(3,1fr)}.home-main-action{min-height:62px;font-size:18px}.home-quick button{min-height:48px}.home-info{background:linear-gradient(135deg,#fff,#f6f7fa)}
+@media(max-width:560px){.home-stats{grid-template-columns:1fr 1fr}.home-stats .stat:last-child{grid-column:1/-1}.home-quick{flex-direction:column}.home-quick button{width:100%}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
@@ -304,13 +307,11 @@ function renderProjects(){
 function render(){
  renderProjects();
  var es=entries(db.projectId), total=es.reduce(function(n,e){return n+Number(e.minutes||0);},0), billed=billedHours(db.projectId);
- $("totalH").textContent=fmt(total);$("openH").textContent=fmt(Math.max(0,total-billed));
- $("recent").innerHTML=es.slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date));}).slice(0,8).map(function(e){
-   return '<div class="item"><b>'+esc(e.date)+'</b> · '+fmt(e.minutes)+' '+(e.billedLegacy?'<span class="badge done">teilweise abgerechnet</span>':'')+
-   '<div class="muted">'+(e.materials||[]).map(function(m){return esc(m.qty)+" "+esc(m.unit)+" "+esc(m.name);}).join(", ")+'</div>'+
-   '<div class="actions"><button class="secondary" data-edit="'+e.id+'">Bearbeiten</button><button class="danger" data-delete="'+e.id+'">Löschen</button></div></div>';
- }).join("")||'<div class="muted">Noch keine Einträge.</div>';
- document.querySelectorAll("[data-edit]").forEach(function(b){b.onclick=function(){editEntry(this.getAttribute("data-edit"));};});
+ $("totalH").textContent=fmt(total);
+ $("homeBilled").textContent=fmt(billed);
+ $("openH").textContent=fmt(Math.max(0,total-billed));
+ var proj=db.projects.find(function(p){return p.id===db.projectId;});
+ $("homeStatusText").textContent=proj?proj.name:"Keine Baustelle ausgewählt";
  renderOverview();renderBilling();renderMaster();
 }
 function weekKey(date){
@@ -329,6 +330,10 @@ function renderOverview(){
  var es=all.filter(function(e){return (!from||e.date>=from)&&(!to||e.date<=to);});
  var total=all.reduce(function(n,e){return n+Number(e.minutes||0);},0),b=billedHours(pid);
  $("ovTotal").textContent=fmt(total);$("ovBilled").textContent=fmt(b);$("ovOpen").textContent=fmt(Math.max(0,total-b));
+ var recent3=all.slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date)) || String(b.id).localeCompare(String(a.id));}).slice(0,3);
+ $("recentOverview").innerHTML=recent3.map(function(e){return '<div class="item"><b>'+esc(e.date)+'</b> · '+fmt(e.minutes)+'<div class="muted">'+(e.note?esc(e.note):((e.materials||[]).map(function(m){return esc(m.qty)+" "+esc(m.unit)+" "+esc(m.name);}).join(", ")||"Keine Notiz"))+'</div><div class="actions"><button class="secondary" data-edit3="'+e.id+'">Bearbeiten</button><button class="danger" data-delete3="'+e.id+'">Löschen</button></div></div>';}).join('')||'<div class="muted">Noch keine Einträge.</div>';
+ document.querySelectorAll("[data-edit3]").forEach(function(b){b.onclick=function(){editEntry(this.getAttribute("data-edit3"));};});
+ document.querySelectorAll("[data-delete3]").forEach(function(b){b.onclick=function(){deleteEntry(this.getAttribute("data-delete3"));};});
  var groups={};es.slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date));}).forEach(function(e){var k=weekKey(e.date);if(!groups[k])groups[k]=[];groups[k].push(e);});
  var keys=Object.keys(groups).sort().reverse();
  $("days").innerHTML=keys.map(function(k,i){
@@ -477,6 +482,8 @@ $("exportData").onclick=exportData;
 $("importDataBtn").onclick=function(){$("importData").click();};
 $("importData").onchange=function(){if(this.files&&this.files[0])importData(this.files[0]);this.value="";};
 
+$("homeOverview").onclick=function(){show("overview");};
+$("homeBilling").onclick=function(){show("billing");};
 $("cloudLogin").onclick=cloudLogin; $("cloudSignup").onclick=cloudSignup; $("cloudLogout").onclick=cloudLogout;
 
 var dl=document.createElement("div");dl.innerHTML='<datalist id="materialList"></datalist><datalist id="toolList"></datalist><datalist id="unitList"><option value="Stk."><option value="kg"><option value="Sack"><option value="m"><option value="m²"><option value="m³"><option value="l"><option value="Stk"></datalist>';document.body.appendChild(dl);
