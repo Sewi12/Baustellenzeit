@@ -50,7 +50,7 @@ nav button{flex:1;background:#f3f4f6;padding:9px 3px;font-size:13px}nav button.a
 <body>
 <div class="splash" id="splash"><div class="splash-inner"><div class="app-logo">🏗️</div><div class="splash-title">Baustellenzeit</div><div class="splash-sub">Stunden · Material · Werkzeug</div></div></div>
 <div class="app">
-<header><div style="display:flex;align-items:center;gap:11px"><div style="font-size:28px">🏗️</div><div><h1>Baustellenzeit</h1><p>Stunden · Material · Werkzeug · Abrechnung</p><div style="font-size:11px;opacity:.45;margin-top:4px">v9.2</div></div></div></header>
+<header><div style="display:flex;align-items:center;gap:11px"><div style="font-size:28px">🏗️</div><div><h1>Baustellenzeit</h1><p>Stunden · Material · Werkzeug · Abrechnung</p><div style="font-size:11px;opacity:.45;margin-top:4px">v9.3</div></div></div></header>
 <main>
 
 <section id="home">
@@ -466,7 +466,7 @@ function openBillingModal(editId){
  var open=Math.max(0,total-b),oldBill=editId?db.billings.find(function(x){return x.id===editId;}):null;
  var html='<label>Arbeitszeit dieser Abrechnung (Stunden)</label><input id="customBillMinutes" type="number" min="0" step="0.25" value="'+(oldBill?(Number(oldBill.minutes)||0)/60:0)+'"><div class="muted small" style="margin-top:5px">Noch offen: '+fmt(open+(oldBill?Number(oldBill.minutes)||0:0))+'</div><div style="margin-top:12px"><b>Material dieser Abrechnung</b></div>';
  Object.keys(mats).forEach(function(k){var x=k.split("|"),all=mats[k],done=bm[k]||0,old=0;if(oldBill)(oldBill.materials||[]).forEach(function(mm){if(mm.name+"|"+mm.unit===k)old=Number(mm.qty)||0;});var openM=Math.max(0,all-done+old);html+='<div class="row"><span class="grow">'+esc(x[0])+' <span class="muted">('+esc(x[1])+') · offen '+openM+'</span></span><input class="customMat" data-name="'+esc(x[0])+'" data-unit="'+esc(x[1])+'" type="number" min="0" step="0.01" value="'+old+'" style="max-width:120px"></div>';});
- $("billChoices").innerHTML="";$("billSelectedSummary").innerHTML="<b>Baustelle:</b> "+esc((db.projects.find(function(p){return p.id===pid;})||{}).name||"");$("billCustom").innerHTML=html;$("billCustom").classList.remove("hidden");$("createBill").textContent=editId?"Abrechnung ändern":"Abrechnung speichern";$("modal").dataset.editId=editId||"";$("modal").classList.remove("hidden");
+ $("billSelectedSummary").innerHTML="<b>Baustelle:</b> "+esc((db.projects.find(function(p){return p.id===pid;})||{}).name||"");$("billCustom").innerHTML=html;$("billCustom").classList.remove("hidden");$("createBill").textContent=editId?"Abrechnung ändern":"Abrechnung speichern";$("modal").dataset.editId=editId||"";$("modal").classList.remove("hidden");
 }
 function createBilling(){
  var pid=window.billP||db.projectId,editId=$("modal").dataset.editId||null,available=Math.max(0,entries(pid).reduce(function(n,e){return n+Number(e.minutes||0);},0)-billedHours(pid));
