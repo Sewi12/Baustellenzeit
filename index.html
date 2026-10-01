@@ -327,14 +327,31 @@ function render(){
  $("homeStatusText").textContent=proj?proj.name:"Keine Baustelle ausgewählt";
  renderOverview();renderBilling();renderMaster();
 }
+function parseLocalDate(date){
+ var p=String(date||"").split("-");
+ return new Date(Number(p[0]),Number(p[1])-1,Number(p[2]),12,0,0,0);
+}
+function isoWeekInfo(date){
+ var d=parseLocalDate(date);
+ var day=d.getDay()||7;
+ d.setDate(d.getDate()+4-day);
+ var isoYear=d.getFullYear();
+ var yearStart=new Date(isoYear,0,1,12,0,0,0);
+ var week=Math.ceil((((d-yearStart)/86400000)+1)/7);
+ return {year:isoYear,week:week};
+}
 function weekKey(date){
- var d=new Date(date+"T12:00:00"),day=d.getDay()||7; d.setDate(d.getDate()+4-day);
- var year=d.getFullYear(),jan4=new Date(year,0,4),week=Math.ceil((((d-jan4)/86400000)+jan4.getDay()+1)/7);
- return year+"-W"+String(week).padStart(2,"0");
+ var i=isoWeekInfo(date);
+ return i.year+"-W"+String(i.week).padStart(2,"0");
 }
 function weekLabel(key){
- var a=key.split("-W"),year=Number(a[0]),week=Number(a[1]),jan4=new Date(year,0,4),day=jan4.getDay()||7;
- var monday=new Date(jan4);monday.setDate(jan4.getDate()-day+1+(week-1)*7);var sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
+ var a=key.split("-W"),year=Number(a[0]),week=Number(a[1]);
+ var jan4=new Date(year,0,4,12,0,0,0);
+ var day=jan4.getDay()||7;
+ var monday=new Date(jan4);
+ monday.setDate(jan4.getDate()-day+1+(week-1)*7);
+ var sunday=new Date(monday);
+ sunday.setDate(monday.getDate()+6);
  function f(d){return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."+d.getFullYear();}
  return "KW "+week+" · "+f(monday)+"–"+f(sunday);
 }
