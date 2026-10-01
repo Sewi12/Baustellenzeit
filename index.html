@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Baustellenzeit">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Baustellenzeit</title>
+<style>
+html{background:#111827}
+.splash{position:fixed;inset:0;background:#111827;color:#fff;z-index:100;display:flex;align-items:center;justify-content:center;transition:opacity .35s ease}
+.splash.hide{opacity:0;pointer-events:none}
+.splash-inner{text-align:center}.app-logo{width:86px;height:86px;border-radius:22px;background:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:0 10px 30px #0005;font-size:45px}
+.splash-title{font-size:25px;font-weight:800}.splash-sub{opacity:.65;margin-top:5px}
+.app{background:#f3f4f6}
+*{box-sizing:border-box}body{margin:0;background:#f3f4f6;color:#111827;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.app{max-width:680px;margin:auto;min-height:100vh;padding-bottom:92px}
+header{background:#111827;color:#fff;padding:calc(18px + env(safe-area-inset-top)) 18px 18px}
+h1{margin:0;font-size:25px}header p{margin:5px 0 0;opacity:.7}
+main{padding:15px}.card{background:#fff;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 1px 5px #0001}
+label{display:block;font-size:13px;font-weight:700;color:#6b7280;margin:11px 0 6px}
+input,select,textarea{width:100%;font:inherit;font-size:16px;padding:12px;border:1px solid #d1d5db;border-radius:11px;background:#fff;color:#111827}
+textarea{min-height:75px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{font:inherit;font-size:16px;font-weight:700;border:0;border-radius:12px;padding:12px 14px;cursor:pointer}
+.primary{background:#111827;color:#fff;width:100%}.secondary{background:#e5e7eb;color:#111827}.danger{background:#fee2e2;color:#991b1b}.green{background:#dcfce7;color:#166534}
+.row{display:flex;gap:8px;align-items:center;margin:8px 0}.grow{flex:1}.stat{background:#f9fafb;border-radius:13px;padding:13px}.big{font-size:30px;font-weight:800}
+.muted{color:#6b7280;font-size:14px}.item{padding:12px 0;border-bottom:1px solid #eee}.item:last-child{border:0}
+.totalgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.hidden{display:none!important}
+.badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:700}.badge.done{background:#dcfce7;color:#166534}
+.actions{display:flex;gap:7px;margin-top:9px}.actions button{flex:1;font-size:14px;padding:9px}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;padding:7px 10px calc(7px + env(safe-area-inset-bottom));display:flex;gap:7px;z-index:10}
+nav button{flex:1;background:#f3f4f6;padding:9px 3px;font-size:13px}nav button.active{background:#111827;color:#fff}
+.modal{position:fixed;inset:0;background:#0008;z-index:20;display:flex;align-items:flex-end}.sheet{background:#fff;width:100%;max-width:680px;margin:auto;border-radius:20px 20px 0 0;padding:18px;max-height:90vh;overflow:auto}
+.checkrow{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #eee}.checkrow input{width:22px;height:22px}.checkrow .name{flex:1}
+.small{font-size:13px}.line-total{font-weight:800}.subtle{background:#f9fafb;padding:10px;border-radius:12px;margin-top:10px}
+@media(min-width:681px){.modal{align-items:center}.sheet{border-radius:20px}}
+.cloud-status{padding:10px 12px;border-radius:12px;background:#f3f4f6;font-size:14px;margin-top:10px}.cloud-ok{background:#dcfce7;color:#166534}.cloud-warn{background:#fef3c7;color:#92400e}.cloud-error{background:#fee2e2;color:#991b1b}
+.authbox{background:#f9fafb;border-radius:14px;padding:12px;margin-top:10px}
+
+.home-project{padding-bottom:16px}.home-stats{grid-template-columns:repeat(3,1fr)}.home-main-action{min-height:62px;font-size:18px}.home-quick button{min-height:48px}.home-info{background:linear-gradient(135deg,#fff,#f6f7fa)}
+@media(max-width:560px){.home-stats{grid-template-columns:1fr 1fr}.home-stats .stat:last-child{grid-column:1/-1}.home-quick{flex-direction:column}.home-quick button{width:100%}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+</head>
+<body>
+<div class="splash" id="splash"><div class="splash-inner"><div class="app-logo">🏗️</div><div class="splash-title">Baustellenzeit</div><div class="splash-sub">Stunden · Material · Werkzeug</div></div></div>
+<div class="app">
+<header><div style="display:flex;align-items:center;gap:11px"><div style="font-size:28px">🏗️</div><div><h1>Baustellenzeit</h1><p>Stunden · Material · Werkzeug · Abrechnung</p><div style="font-size:11px;opacity:.45;margin-top:4px">v9.6</div></div></div></header>
+<main>
+
+<section id="home">
+<div class="card" style="padding:18px">
+  <div class="muted small" style="margin-bottom:5px">AKTUELLE BAUSTELLE</div>
+  <div class="row" style="margin:0"><select id="projectSelect" class="grow" style="font-size:17px;font-weight:700"><option>Baustelle auswählen</option></select><button class="secondary" id="addProject" style="min-width:52px;font-size:22px">＋</button></div>
+</div>
+<div class="totalgrid home-stats">
+  <div class="stat"><span class="muted">Gesamt</span><div class="big" id="totalH">0:00 h</div></div>
+  <div class="stat"><span class="muted">Abgerechnet</span><div class="big" id="homeBilled">0:00 h</div></div>
+  <div class="stat"><span class="muted">Offen</span><div class="big" id="openH">0:00 h</div></div>
+</div>
+<div style="height:12px"></div>
+<button class="primary" id="newEntry" style="font-size:17px;padding:15px">＋ Arbeitstag erfassen</button>
+<div class="home-quick" style="display:flex;gap:10px;margin-top:10px">
+  <button class="secondary" id="homeOverview" style="flex:1">📊 Übersicht</button>
+  <button class="secondary" id="homeBilling" style="flex:1">💶 Abrechnung</button>
+</div>
+<div class="card" style="margin-top:14px;background:#f9fafb">
+  <div style="font-weight:800">Schnellüberblick</div>
+  <div id="homeStatusText" class="muted" style="margin-top:5px">Baustelle auswählen</div>
+</div>
+</section>
+
+<section id="entry" class="hidden">
+<div class="card">
+<h2 id="entryTitle" style="margin-top:0">Arbeitstag</h2>
+<label>Datum</label><input id="date" type="date">
+<div class="grid"><div><label>Beginn</label><input id="start" type="time" value="07:00"></div><div><label>Ende</label><input id="end" type="time" value="17:00"></div></div>
+<label>Pause</label><input id="pause" type="time" value="00:00">
+<div class="stat" style="margin-top:12px"><span class="muted">Arbeitszeit</span><div id="calc" style="font-size:23px;font-weight:800">7:00 h</div></div>
+<label>Notiz</label><textarea id="note" placeholder="z. B. Mauer abgebrochen"></textarea>
+</div>
+
+<div class="card"><h3 style="margin-top:0">Material</h3>
+<div id="materials"></div><button class="secondary" id="addMat">＋ Material</button>
+</div>
+
+<div class="card"><h3 style="margin-top:0">Werkzeug</h3>
+<div id="tools"></div><button class="secondary" id="addTool">＋ Werkzeug</button>
+</div>
+
+<button class="primary" id="saveEntry">Arbeitstag speichern</button>
+<button class="secondary" id="cancelEntry" style="width:100%;margin-top:8px">Abbrechen</button>
+</section>
+
+<section id="overview" class="hidden">
+<div class="card"><h2 style="margin-top:0">Übersicht</h2><label>Baustelle</label><select id="ovProject"></select>
+<div class="totalgrid" style="margin-top:12px"><div class="stat"><span class="muted">Gesamt</span><div id="ovTotal" class="big">0:00 h</div></div><div class="stat"><span class="muted">Abgerechnet</span><div id="ovBilled" class="big">0:00 h</div></div><div class="stat"><span class="muted">Offen</span><div id="ovOpen" class="big">0:00 h</div></div></div></div>
+<div class="card"><h3 style="margin-top:0">Letzte 3 Einträge</h3><div id="recentOverview"></div></div>
+<div class="card"><h3 style="margin-top:0">Arbeitstage</h3><div class="grid"><div><label>Von</label><input id="ovFrom" type="date"></div><div><label>Bis</label><input id="ovTo" type="date"></div></div><button class="secondary" id="ovReset" style="width:100%;margin-top:8px">Zeitraum zurücksetzen</button><div id="days" style="margin-top:10px"></div></div>
+<div class="card"><h3 style="margin-top:0">Material gesamt</h3><div id="matSum"></div></div>
+<div class="card"><h3 style="margin-top:0">Werkzeug</h3><div id="toolSum"></div></div>
+</section>
+
+<section id="billing" class="hidden">
+<div class="card"><h2 style="margin-top:0">Abrechnung</h2><label>Baustelle</label><select id="billProject"></select>
+<div class="totalgrid" style="margin-top:12px"><div class="stat"><span class="muted">Stunden offen</span><div id="billOpen" class="big">0:00 h</div></div><div class="stat"><span class="muted">Stunden abgerechnet</span><div id="billDone" class="big">0:00 h</div></div></div>
+<div class="subtle"><b>Material</b><div id="billMatTotals" class="small" style="margin-top:5px"></div></div>
+<p class="muted">Stunden und Material werden unabhängig voneinander abgerechnet. Du kannst z. B. 8 Stunden und 15 kg Zement abrechnen, ohne den restlichen offenen Bestand anzutasten.</p>
+<button class="primary" id="newBill">＋ Abrechnung erstellen</button>
+</div>
+<div class="card"><h3 style="margin-top:0">Abrechnungen</h3><div id="billings"></div></div>
+</section>
+
+<section id="settings" class="hidden">
+<div class="card"><h2 style="margin-top:0">Stammdaten</h2>
+<p class="muted">Material und Werkzeug hier einmal anlegen. Danach erscheinen sie bei der Eingabe als Auswahl/Vorschlag.</p>
+<label>Material (Komma getrennt)</label><input id="matMaster" placeholder="Zement, Schrauben, Beton"><div class="muted small">Einheit wird automatisch vorgeschlagen, z. B. Zement → Sack.</div>
+<label>Werkzeug (Komma getrennt)</label><input id="toolMaster" placeholder="Bohrhammer, Akkuschrauber">
+<button class="primary" style="margin-top:14px" id="saveMaster">Speichern</button>
+</div>
+<div class="card">
+<h2 style="margin-top:0">☁️ Cloud-Synchronisation</h2>
+<p class="muted">Mit einem Konto kannst du dieselben Baustellen auf iPhone, iPad und PC verwenden. Die Daten liegen dann in der Cloud und bleiben von App-Updates getrennt.</p>
+<div id="cloudStatus" class="cloud-status cloud-warn">Noch nicht angemeldet – lokale Daten werden verwendet.</div>
+<div id="authBox" class="authbox">
+<label>E-Mail</label><input id="cloudEmail" type="email" autocomplete="email" placeholder="name@beispiel.at">
+<label>Passwort</label><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Mindestens 6 Zeichen">
+<div class="actions"><button class="primary" id="cloudLogin">Anmelden</button><button class="secondary" id="cloudSignup">Konto erstellen</button></div>
+<button class="danger" id="cloudLogout" style="display:none;width:100%;margin-top:8px">Abmelden</button>
+</div>
+</div>
+<div class="card">
+<h2 style="margin-top:0">💾 Datensicherung</h2>
+<p class="muted">Sichere deine Baustellen, Arbeitstage, Materialien, Werkzeuge und Abrechnungen als Datei. Die Cloud ist die Hauptspeicherung. Der Export bleibt zusätzlich als unabhängige Sicherung verfügbar.</p>
+<div class="actions">
+<button class="secondary" id="exportData">💾 Daten sichern</button>
+<button type="button" class="secondary" id="exportExcel">📊 Excel exportieren</button>
+<button class="secondary" id="importDataBtn">Daten wiederherstellen</button>
+</div>
+<input id="importData" type="file" accept=".json,application/json" class="hidden">
+<div class="muted small" style="margin-top:8px">Tipp: Die Sicherungsdatei in „Dateien“ oder iCloud Drive aufbewahren.</div>
+</div>
+</section>
+</main>
+
+<nav>
+<button id="nHome">🏠<br>Start</button><button id="nEntry">＋<br>Eintrag</button><button id="nOverview">📊<br>Übersicht</button><button id="nBilling">💶<br>Abrechnung</button><button id="nSettings">⚙️<br>Mehr</button>
+</nav>
+</div>
+
+<div id="updateModal" class="modal hidden"><div class="sheet"><h2 style="margin-top:0">🔄 Neue Version verfügbar</h2><p class="muted">Eine neue Version von Baustellenzeit ist verfügbar.</p><button class="primary" id="doUpdate">Update downloaden</button><button class="secondary" id="laterUpdate" style="width:100%;margin-top:8px">Später</button></div></div>
+
+<div id="modal" class="modal hidden"><div class="sheet">
+<h2 style="margin-top:0">Neue Abrechnung</h2>
+<p class="muted">Die verfügbaren Stunden und Materialmengen werden für die gesamte Baustelle berechnet. Du kannst unabhängig davon Teilmengen abrechnen.</p>
+<div class="subtle"><b>Diese Abrechnung</b><div id="billSelectedSummary" style="margin-top:5px">Noch nichts ausgewählt.</div><div id="billCustom" class="hidden" style="margin-top:10px"></div></div>
+<button class="primary" id="createBill" style="margin-top:14px">Abrechnung speichern</button>
+<button class="secondary" id="closeModal" style="width:100%;margin-top:8px">Abbrechen</button>
+</div></div>
+
+<script>
+(function(){
+"use strict";
+
+var cloudClient=null, cloudUser=null, cloudReady=false, cloudSyncing=false, cloudLoading=false;
+
+var KEY="baustellenzeit_data";
+var LEGACY_KEYS=["baustellenzeit_data","baustellenzeit_v7_app","baustellenzeit_v6","baustellenzeit_v7","baustellenzeit_v5","baustellenzeit_v4","baustellenzeit_v3","baustellenzeit_v2","baustellenzeit_v1"];
+var db=null;
+for(var ki=0;ki<LEGACY_KEYS.length;ki++){
+ try{
+  var raw=localStorage.getItem(LEGACY_KEYS[ki]);
+  if(raw){var candidate=JSON.parse(raw);if(candidate&&candidate.projects&&candidate.entries){db=candidate;break;}}
+ }catch(e){}
+}
+if(!db){
+ db={projects:[{id:"p1",name:"Meine Baustelle"}],projectId:"p1",entries:[],billings:[],
+ materials:["Zement","Beton","Schrauben","Dübel","Holz","Kabel"],
+ tools:["Bohrhammer","Akkuschrauber","Winkelschleifer","Schaufel"]};
+}
+db.projects=db.projects||[];db.entries=db.entries||[];db.billings=db.billings||[];
+db.materials=db.materials||[];db.tools=db.tools||[];
+if(!db.projects.length)db.projects=[{id:"p1",name:"Meine Baustelle"}];
+if(!db.projectId)db.projectId=db.projects[0].id;
+localStorage.setItem(KEY,JSON.stringify(db));
+
+
+/* Dauerhafte lokale Datenbank: IndexedDB. localStorage bleibt als Fallback/Migrationsquelle. */
+var IDB_NAME="BaustellenzeitDB", IDB_STORE="daten", IDB_KEY="hauptdaten", idb=null;
+function openDataDB(done){
+ try{
+  if(!window.indexedDB){done(null);return;}
+  var req=indexedDB.open(IDB_NAME,1);
+  req.onupgradeneeded=function(ev){var d=ev.target.result;if(!d.objectStoreNames.contains(IDB_STORE))d.createObjectStore(IDB_STORE);};
+  req.onsuccess=function(){idb=req.result;done(idb);};
+  req.onerror=function(){done(null);};
+ }catch(e){done(null);}
+}
+function idbRead(done){
+ if(!idb){done(null);return;}
+ try{var tx=idb.transaction(IDB_STORE,"readonly"),r=tx.objectStore(IDB_STORE).get(IDB_KEY);
+  r.onsuccess=function(){done(r.result||null);};r.onerror=function(){done(null);};
+ }catch(e){done(null);}
+}
+function idbWrite(data){
+ if(!idb)return;
+ try{var tx=idb.transaction(IDB_STORE,"readwrite");tx.objectStore(IDB_STORE).put(data,IDB_KEY);}catch(e){}
+}
+function persistAll(){
+ localStorage.setItem(KEY,JSON.stringify(db));
+ idbWrite(db);
+ if(cloudReady && cloudUser && !cloudLoading){ syncToCloud(); }
+}
+async function syncToCloud(){
+ if(!cloudClient || !cloudUser || cloudSyncing) return;
+ cloudSyncing=true;
+ try{
+  var r=await cloudClient.from("user_data").upsert({user_id:cloudUser.id,data:db,updated_at:new Date().toISOString()});
+  if(r.error) throw r.error;
+  setCloudStatus("Cloud synchronisiert", "ok");
+ }catch(e){
+  console.error(e); setCloudStatus("Cloud-Synchronisation fehlgeschlagen – lokale Daten bleiben erhalten.", "error");
+ }finally{cloudSyncing=false;}
+}
+function setCloudStatus(msg,type){
+ var el=$("cloudStatus"); if(!el)return; el.textContent=msg; el.className="cloud-status "+(type==="ok"?"cloud-ok":type==="error"?"cloud-error":"cloud-warn");
+}
+async function loadCloudData(){
+ if(!cloudClient || !cloudUser)return;
+ cloudLoading=true;
+ try{
+  var r=await cloudClient.from("user_data").select("data").eq("user_id",cloudUser.id).maybeSingle();
+  if(r.error) throw r.error;
+  if(r.data && r.data.data){
+   db=r.data.data; normalizeDb(); persistLocalOnly(); setCloudStatus("Cloud verbunden · Daten geladen", "ok"); render();
+  }else{
+   var hasLocal=db.entries.length || db.projects.some(function(p){return p.name!=="Meine Baustelle";}) || db.billings.length;
+   var upload=!hasLocal || confirm("Für dieses Konto gibt es noch keine Cloud-Daten. Sollen die aktuellen Daten dieses Geräts in die Cloud übernommen werden?");
+   if(upload){
+    var up=await cloudClient.from("user_data").upsert({user_id:cloudUser.id,data:db,updated_at:new Date().toISOString()});
+    if(up.error)throw up.error;
+    setCloudStatus("Cloud verbunden · Daten gespeichert", "ok");
+   }else{
+    setCloudStatus("Cloud verbunden · noch keine Daten gespeichert", "ok");
+   }
+  }
+ }catch(e){
+  console.error(e); setCloudStatus("Cloud konnte nicht geladen werden. Bitte Supabase-Einstellungen prüfen.", "error");
+ }finally{cloudLoading=false;}
+}
+function persistLocalOnly(){localStorage.setItem(KEY,JSON.stringify(db));idbWrite(db);}
+function normalizeDb(){
+ db=db||{}; db.projects=db.projects||[];db.entries=db.entries||[];db.billings=db.billings||[];db.materials=db.materials||[];db.tools=db.tools||[];
+ if(!db.projects.length)db.projects=[{id:"p1",name:"Meine Baustelle"}]; if(!db.projectId)db.projectId=db.projects[0].id;
+}
+function $(id){return document.getElementById(id);}
+function save(){persistAll();}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c];});}
+function fmt(m){m=Math.max(0,Math.round(Number(m)||0));return Math.floor(m/60)+":"+String(m%60).padStart(2,"0")+" h";}
+function timeToMin(t){var a=String(t||"00:00").split(":");return Number(a[0])*60+Number(a[1]);}
+function diff(a,b){var x=timeToMin(a),y=timeToMin(b);if(y<x)y+=1440;return y-x;}
+function currentWork(){return Math.max(0,diff($("start").value,$("end").value)-timeToMin($("pause").value));}
+function entries(pid){return db.entries.filter(function(e){return e.projectId===pid;});}
+function billedHours(pid){return db.billings.filter(function(b){return b.projectId===pid;}).reduce(function(n,b){return n+(Number(b.minutes)||0);},0);}
+function billedMaterial(pid){
+ var out={};
+ db.billings.filter(function(b){return b.projectId===pid;}).forEach(function(b){
+   (b.materials||[]).forEach(function(m){var k=m.name+"|"+m.unit;out[k]=(out[k]||0)+Number(m.qty||0);});
+ });
+ return out;
+}
+async function initCloud(){
+ if(!window.supabase || !window.BAUSTELLENZEIT_SUPABASE_URL || !window.BAUSTELLENZEIT_SUPABASE_ANON_KEY){
+  setCloudStatus("Cloud noch nicht eingerichtet – lokale Daten werden verwendet.", "warn"); return;
+ }
+ try{
+  cloudClient=window.supabase.createClient(window.BAUSTELLENZEIT_SUPABASE_URL,window.BAUSTELLENZEIT_SUPABASE_ANON_KEY);
+  var s=await cloudClient.auth.getSession();
+  if(s.data && s.data.session){ await onCloudLogin(s.data.session.user); }
+  cloudClient.auth.onAuthStateChange(function(event,session){
+   setTimeout(function(){ if(session) onCloudLogin(session.user); else onCloudLogout(); },0);
+  });
+ }catch(e){console.error(e);setCloudStatus("Cloud-Konfiguration ungültig.","error");}
+}
+async function onCloudLogin(user){
+ cloudUser=user; cloudReady=false;
+ $("cloudEmail").value=user.email||""; $("cloudPassword").value=""; $("cloudLogin").style.display="none"; $("cloudSignup").style.display="none"; $("cloudLogout").style.display="block";
+ setCloudStatus("Cloud wird geladen …","warn"); await loadCloudData(); cloudReady=true; render();
+}
+function onCloudLogout(){cloudUser=null;cloudReady=false;$("cloudLogin").style.display="block";$("cloudSignup").style.display="block";$("cloudLogout").style.display="none";setCloudStatus("Abgemeldet – lokale Daten werden verwendet.","warn");}
+async function cloudLogin(){
+ if(!cloudClient){alert("Die Cloud ist noch nicht eingerichtet. Bitte supabase-config.js ausfüllen.");return;}
+ var email=$("cloudEmail").value.trim(),password=$("cloudPassword").value; if(!email||!password){alert("Bitte E-Mail und Passwort eingeben.");return;}
+ var r=await cloudClient.auth.signInWithPassword({email:email,password:password}); if(r.error)alert(r.error.message);
+}
+async function cloudSignup(){
+ if(!cloudClient){alert("Die Cloud ist noch nicht eingerichtet. Bitte supabase-config.js ausfüllen.");return;}
+ var email=$("cloudEmail").value.trim(),password=$("cloudPassword").value; if(!email||!password){alert("Bitte E-Mail und Passwort eingeben.");return;}
+ if(password.length<6){alert("Das Passwort muss mindestens 6 Zeichen haben.");return;}
+ var r=await cloudClient.auth.signUp({email:email,password:password}); if(r.error)alert(r.error.message); else alert("Konto erstellt. Falls E-Mail-Bestätigung aktiviert ist, bitte zuerst die Bestätigungs-Mail öffnen.");
+}
+async function cloudLogout(){if(cloudClient)await cloudClient.auth.signOut();}
+
+function projectOptions(){
+ return db.projects.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>';}).join("");
+}
+function renderProjects(){
+ var h=projectOptions();
+ $("projectSelect").innerHTML=h;$("ovProject").innerHTML=h;$("billProject").innerHTML=h;
+ $("projectSelect").value=db.projectId;
+ $("ovProject").value=window.ovP||db.projectId;
+ $("billProject").value=window.billP||db.projectId;
+}
+function render(){
+ renderProjects();
+ var es=entries(db.projectId), total=es.reduce(function(n,e){return n+Number(e.minutes||0);},0), billed=billedHours(db.projectId);
+ $("totalH").textContent=fmt(total);
+ $("homeBilled").textContent=fmt(billed);
+ $("openH").textContent=fmt(Math.max(0,total-billed));
+ var proj=db.projects.find(function(p){return p.id===db.projectId;});
+ $("homeStatusText").textContent=proj?proj.name:"Keine Baustelle ausgewählt";
+ renderOverview();renderBilling();renderMaster();
+}
+function parseLocalDate(date){
+ var p=String(date||"").split("-");
+ return new Date(Number(p[0]),Number(p[1])-1,Number(p[2]),12,0,0,0);
+}
+function isoWeekInfo(date){
+ var d=parseLocalDate(date);
+ var day=d.getDay()||7;
+ d.setDate(d.getDate()+4-day);
+ var isoYear=d.getFullYear();
+ var yearStart=new Date(isoYear,0,1,12,0,0,0);
+ var week=Math.ceil((((d-yearStart)/86400000)+1)/7);
+ return {year:isoYear,week:week};
+}
+function weekKey(date){
+ var i=isoWeekInfo(date);
+ return i.year+"-W"+String(i.week).padStart(2,"0");
+}
+function weekLabel(key){
+ var a=key.split("-W"),year=Number(a[0]),week=Number(a[1]);
+ var jan4=new Date(year,0,4,12,0,0,0);
+ var day=jan4.getDay()||7;
+ var monday=new Date(jan4);
+ monday.setDate(jan4.getDate()-day+1+(week-1)*7);
+ var sunday=new Date(monday);
+ sunday.setDate(monday.getDate()+6);
+ function f(d){return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+"."+d.getFullYear();}
+ return "KW "+week+" · "+f(monday)+"–"+f(sunday);
+}
+function renderOverview(){
+ var pid=window.ovP||db.projectId,all=entries(pid),from=$("ovFrom").value,to=$("ovTo").value;
+ var es=all.filter(function(e){return (!from||e.date>=from)&&(!to||e.date<=to);});
+ var total=all.reduce(function(n,e){return n+Number(e.minutes||0);},0),b=billedHours(pid);
+ $("ovTotal").textContent=fmt(total);$("ovBilled").textContent=fmt(b);$("ovOpen").textContent=fmt(Math.max(0,total-b));
+ var recent3=all.slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date)) || String(b.id).localeCompare(String(a.id));}).slice(0,3);
+ $("recentOverview").innerHTML=recent3.map(function(e){return '<div class="item"><b>'+esc(e.date)+'</b> · '+fmt(e.minutes)+'<div class="muted">'+(e.note?esc(e.note):((e.materials||[]).map(function(m){return esc(m.qty)+" "+esc(m.unit)+" "+esc(m.name);}).join(", ")||"Keine Notiz"))+'</div><div class="actions"><button class="secondary" data-edit3="'+e.id+'">Bearbeiten</button><button class="danger" data-delete3="'+e.id+'">Löschen</button></div></div>';}).join('')||'<div class="muted">Noch keine Einträge.</div>';
+ document.querySelectorAll("[data-edit3]").forEach(function(b){b.onclick=function(){editEntry(this.getAttribute("data-edit3"));};});
+ document.querySelectorAll("[data-delete3]").forEach(function(b){b.onclick=function(){deleteEntry(this.getAttribute("data-delete3"));};});
+ var groups={};es.slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date));}).forEach(function(e){var k=weekKey(e.date);if(!groups[k])groups[k]=[];groups[k].push(e);});
+ var keys=Object.keys(groups).sort().reverse();
+ $("days").innerHTML=keys.map(function(k,i){
+  var arr=groups[k],sum=arr.reduce(function(n,e){return n+Number(e.minutes||0);},0),open=i===0;
+  return '<div class="subtle" style="margin-top:8px"><button class="secondary" data-week="'+esc(k)+'" style="width:100%;text-align:left">'+(open?'▼ ':'▶ ')+esc(weekLabel(k))+' · <b>'+fmt(sum)+'</b></button><div class="week-body '+(open?'':'hidden')+'" style="margin-top:5px">'+arr.map(function(e){return '<div class="item"><b>'+esc(e.date)+'</b> · '+esc(e.start)+'–'+esc(e.end)+' · Pause '+esc(e.pause)+'<br><b>'+fmt(e.minutes)+'</b><div class="muted">'+(e.note?esc(e.note):"")+'</div><div class="actions"><button class="secondary" data-edit2="'+e.id+'">Bearbeiten</button><button class="danger" data-delete2="'+e.id+'">Löschen</button></div></div>';}).join('')+'</div></div>';
+ }).join('')||'<div class="muted">Keine Arbeitstage im gewählten Zeitraum.</div>';
+ document.querySelectorAll("[data-week]").forEach(function(b){b.onclick=function(){var body=this.nextElementSibling;body.classList.toggle("hidden");this.textContent=(body.classList.contains("hidden")?'▶ ':'▼ ')+weekLabel(this.getAttribute("data-week"))+" · "+this.textContent.split("·").pop();};});
+ document.querySelectorAll("[data-edit2]").forEach(function(b){b.onclick=function(){editEntry(this.getAttribute("data-edit2"));};});
+ document.querySelectorAll("[data-delete2]").forEach(function(b){b.onclick=function(){deleteEntry(this.getAttribute("data-delete2"));};});
+ var mm={};all.forEach(function(e){(e.materials||[]).forEach(function(m){var k=m.name+"|"+m.unit;mm[k]=(mm[k]||0)+Number(m.qty||0);});});
+ $("matSum").innerHTML=Object.keys(mm).map(function(k){var x=k.split("|");return '<div class="item"><b>'+mm[k]+' '+esc(x[1])+'</b> '+esc(x[0])+'</div>';}).join("")||'<div class="muted">Noch kein Material.</div>';
+ var tt={};all.forEach(function(e){(e.tools||[]).forEach(function(x){tt[x]=(tt[x]||0)+1;});});
+ $("toolSum").innerHTML=Object.keys(tt).map(function(x){return '<div class="item"><b>'+esc(x)+'</b> · '+tt[x]+' Tage</div>';}).join("")||'<div class="muted">Noch kein Werkzeug.</div>';
+}
+function renderBilling(){
+ var pid=window.billP||db.projectId,es=entries(pid),total=es.reduce(function(n,e){return n+Number(e.minutes||0);},0),b=billedHours(pid),openMat={};
+ es.forEach(function(e){(e.materials||[]).forEach(function(m){var k=m.name+"|"+m.unit;openMat[k]=(openMat[k]||0)+Number(m.qty||0);});});
+ var bm=billedMaterial(pid);
+ Object.keys(bm).forEach(function(k){openMat[k]=(openMat[k]||0)-bm[k];});
+ $("billOpen").textContent=fmt(Math.max(0,total-b));$("billDone").textContent=fmt(b);
+ $("billMatTotals").innerHTML=Object.keys(openMat).map(function(k){var x=k.split("|"),all=0;es.forEach(function(e){(e.materials||[]).forEach(function(m){if(m.name===x[0]&&m.unit===x[1])all+=Number(m.qty||0);});});var done=bm[k]||0,open=Math.max(0,all-done);return '<div>'+esc(x[0])+': <b>'+open+' '+esc(x[1])+' offen</b> / '+all+' '+esc(x[1])+' gesamt</div>';}).join("")||'<span class="muted">Kein Material.</span>';
+ $("billings").innerHTML=db.billings.filter(function(x){return x.projectId===pid;}).slice().reverse().map(function(x){
+   return '<div class="item"><b>Abrechnung '+esc(x.number)+'</b> · '+esc(x.date)+'<br><b>'+fmt(x.minutes)+'</b>'+
+   ((x.materials||[]).length?'<div>'+x.materials.map(function(m){return esc(m.qty)+" "+esc(m.unit)+" "+esc(m.name);}).join(", ")+'</div>':'')+
+   '<div class="actions"><button class="secondary" data-editbill="'+x.id+'">Bearbeiten</button><button class="danger" data-deletebill="'+x.id+'">Löschen</button></div></div>';
+ }).join("")||'<div class="muted">Noch keine Abrechnungen.</div>';
+ document.querySelectorAll("[data-editbill]").forEach(function(b){b.onclick=function(){openBillingModal(this.getAttribute("data-editbill"));};});
+ document.querySelectorAll("[data-deletebill]").forEach(function(b){b.onclick=function(){deleteBilling(this.getAttribute("data-deletebill"));};});
+}
+function renderMaster(){$("matMaster").value=db.materials.join(", ");$("toolMaster").value=db.tools.join(", ");}
+function show(id){
+ ["home","entry","overview","billing","settings"].forEach(function(x){$(x).classList.toggle("hidden",x!==id);});
+ ["Home","Entry","Overview","Billing","Settings"].forEach(function(x){$("n"+x).classList.remove("active");});
+ $("n"+id.charAt(0).toUpperCase()+id.slice(1)).classList.add("active");
+ if(id==="overview")renderOverview();if(id==="billing")renderBilling();
+}
+var editId=null;
+$("ovFrom").onchange=function(){renderOverview();};$("ovTo").onchange=function(){renderOverview();};$("ovReset").onclick=function(){$("ovFrom").value="";$("ovTo").value="";renderOverview();};
+function resetEntry(){
+ editId=null;$("entryTitle").textContent="Arbeitstag erfassen";
+ var d=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+ $("date").value=d;$("start").value="07:00";$("end").value="17:00";$("pause").value="00:00";$("note").value="";
+ $("materials").innerHTML="";$("tools").innerHTML="";$("calc").textContent=fmt(currentWork());addToolChoices();
+}
+function editEntry(id){
+ var e=db.entries.find(function(x){return x.id===id;});if(!e)return;
+ editId=id;$("entryTitle").textContent="Arbeitstag bearbeiten";db.projectId=e.projectId;
+ $("date").value=e.date;$("start").value=e.start;$("end").value=e.end;$("pause").value=e.pause;$("note").value=e.note||"";
+ $("materials").innerHTML="";$("tools").innerHTML="";
+ (e.materials||[]).forEach(function(m){addMaterial(m);});(e.tools||[]).forEach(function(t){addTool(t);});addToolChoices();
+ $("calc").textContent=fmt(currentWork());renderProjects();show("entry");
+}
+function deleteEntry(id){
+ var e=db.entries.find(function(x){return x.id===id;});if(!e)return;
+ if(!confirm("Arbeitstag "+e.date+" wirklich löschen?"))return;
+ db.entries=db.entries.filter(function(x){return x.id!==id;});save();render();
+}
+function defaultUnit(name){
+ var n=String(name||"").toLowerCase();
+ if(n.indexOf("zement")>=0)return "Sack";
+ if(n.indexOf("beton")>=0)return "m³";
+ if(n.indexOf("kabel")>=0||n.indexOf("holz")>=0)return "m";
+ if(n.indexOf("schraub")>=0||n.indexOf("dübel")>=0)return "Stk.";
+ return "";
+}
+function addMaterial(m){
+ m=m||{name:"",qty:"",unit:""};
+ var d=document.createElement("div");d.className="row";
+ d.innerHTML='<div class="grow"><input class="matName" list="materialList" placeholder="Material" value="'+esc(m.name)+'"></div>'+
+ '<input class="matQty" type="number" min="0" step="0.01" placeholder="Menge" style="max-width:90px" value="'+esc(m.qty)+'">'+
+ '<input class="matUnit" list="unitList" placeholder="Einheit" style="max-width:78px" value="'+esc(m.unit)+'">'+
+ '<button class="danger">×</button>';
+ d.querySelector("button").onclick=function(){d.remove();};
+ var ni=d.querySelector(".matName"),ui=d.querySelector(".matUnit");
+ ni.onchange=function(){if(!ui.value)ui.value=defaultUnit(ni.value);};
+ $("materials").appendChild(d);
+}
+function addTool(t){
+ t=t||"";var d=document.createElement("div");d.className="row";
+ d.innerHTML='<input class="toolName grow" list="toolList" placeholder="Werkzeug" value="'+esc(t)+'"><button class="danger">×</button>';
+ d.querySelector("button").onclick=function(){d.remove();};$("tools").appendChild(d);
+}
+function addToolChoices(){
+ var old=document.getElementById("toolQuickSelect");if(old)old.remove();
+ var box=document.createElement("div");box.id="toolQuickSelect";box.className="subtle";
+ box.innerHTML="<b>Schnellauswahl</b><div id='toolChecks' style='margin-top:6px'></div>";
+ $("tools").parentNode.insertBefore(box,$("tools"));
+ db.tools.forEach(function(t){
+  var row=document.createElement("label");row.style.display="flex";row.style.alignItems="center";row.style.gap="8px";row.style.margin="6px 0";
+  row.innerHTML='<input type="checkbox" style="width:20px;height:20px"> <span>'+esc(t)+'</span>';
+  row.querySelector("input").onchange=function(){
+   var existing=[].slice.call(document.querySelectorAll("#tools .toolName")).map(function(x){return x.value;});
+   if(this.checked && existing.indexOf(t)<0)addTool(t);
+   if(!this.checked)[].slice.call(document.querySelectorAll("#tools .toolName")).forEach(function(x){if(x.value===t)x.parentNode.remove();});
+  };
+  $("toolChecks").appendChild(row);
+ });
+}
+function saveEntry(){
+ var mats=[].slice.call(document.querySelectorAll("#materials .row")).map(function(r){return{name:r.querySelector(".matName").value.trim(),qty:Number(r.querySelector(".matQty").value)||0,unit:r.querySelector(".matUnit").value.trim()};}).filter(function(x){return x.name;});
+ var tools=[].slice.call(document.querySelectorAll("#tools .toolName")).map(function(x){return x.value.trim();}).filter(Boolean);
+ if(editId){
+   var e=db.entries.find(function(x){return x.id===editId;});
+   e.projectId=db.projectId;e.date=$("date").value;e.start=$("start").value;e.end=$("end").value;e.pause=$("pause").value;e.minutes=currentWork();e.note=$("note").value.trim();e.materials=mats;e.tools=tools;
+ }else{
+   db.entries.push({id:uid(),projectId:db.projectId,date:$("date").value,start:$("start").value,end:$("end").value,pause:$("pause").value,minutes:currentWork(),note:$("note").value.trim(),materials:mats,tools:tools});
+ }
+ save();alert(editId?"Arbeitstag geändert.":"Arbeitstag gespeichert.");resetEntry();render();show("home");
+}
+function addProject(){var n=prompt("Name der Baustelle:");if(n&&n.trim()){var p={id:uid(),name:n.trim()};db.projects.push(p);db.projectId=p.id;save();render();}}
+function materialFromSelectedDays(ids){
+ var mats={};ids.forEach(function(id){var e=db.entries.find(function(x){return x.id===id;});if(e)(e.materials||[]).forEach(function(m){var k=m.name+"|"+m.unit;mats[k]=(mats[k]||0)+Number(m.qty||0);});});
+ return mats;
+}
+function openBillingModal(editId){
+ var pid=window.billP||db.projectId,es=entries(pid),total=es.reduce(function(n,e){return n+Number(e.minutes||0);},0),b=billedHours(pid),bm=billedMaterial(pid),mats={};
+ es.forEach(function(e){(e.materials||[]).forEach(function(m){var k=m.name+"|"+m.unit;mats[k]=(mats[k]||0)+Number(m.qty||0);});});Object.keys(bm).forEach(function(k){mats[k]=mats[k]||0;});
+ var open=Math.max(0,total-b),oldBill=editId?db.billings.find(function(x){return x.id===editId;}):null;
+ var html='<label>Arbeitszeit dieser Abrechnung (Stunden)</label><input id="customBillMinutes" type="number" min="0" step="0.25" value="'+(oldBill?(Number(oldBill.minutes)||0)/60:0)+'"><div class="muted small" style="margin-top:5px">Noch offen: '+fmt(open+(oldBill?Number(oldBill.minutes)||0:0))+'</div><div style="margin-top:12px"><b>Material dieser Abrechnung</b></div>';
+ Object.keys(mats).forEach(function(k){var x=k.split("|"),all=mats[k],done=bm[k]||0,old=0;if(oldBill)(oldBill.materials||[]).forEach(function(mm){if(mm.name+"|"+mm.unit===k)old=Number(mm.qty)||0;});var openM=Math.max(0,all-done+old);html+='<div class="row"><span class="grow">'+esc(x[0])+' <span class="muted">('+esc(x[1])+') · offen '+openM+'</span></span><input class="customMat" data-name="'+esc(x[0])+'" data-unit="'+esc(x[1])+'" type="number" min="0" step="0.01" value="'+old+'" style="max-width:120px"></div>';});
+ $("billSelectedSummary").innerHTML="<b>Baustelle:</b> "+esc((db.projects.find(function(p){return p.id===pid;})||{}).name||"");$("billCustom").innerHTML=html;$("billCustom").classList.remove("hidden");$("createBill").textContent=editId?"Abrechnung ändern":"Abrechnung speichern";$("modal").dataset.editId=editId||"";$("modal").classList.remove("hidden");
+}
+function createBilling(){
+ var pid=window.billP||db.projectId,editId=$("modal").dataset.editId||null,available=Math.max(0,entries(pid).reduce(function(n,e){return n+Number(e.minutes||0);},0)-billedHours(pid));
+ if(editId){var old=db.billings.find(function(x){return x.id===editId;});if(old)available+=Number(old.minutes)||0;}
+ var mins=Math.round((Number($("customBillMinutes").value)||0)*60);if(mins>available){alert("Zu viele Stunden. Maximal "+fmt(available)+" offen.");return;}
+ var already=billedMaterial(pid),mats=[],bad=false;
+ [].slice.call(document.querySelectorAll(".customMat")).forEach(function(inp){var q=Number(inp.value)||0,k=inp.dataset.name+"|"+inp.dataset.unit,totalMat=entries(pid).reduce(function(n,e){return n+(e.materials||[]).filter(function(m){return m.name+"|"+m.unit===k;}).reduce(function(a,m){return a+Number(m.qty||0);},0);},0),maxOpen=Math.max(0,totalMat-(already[k]||0));if(editId){var old=db.billings.find(function(x){return x.id===editId;});(old&&old.materials||[]).forEach(function(m){if(m.name+"|"+m.unit===k)maxOpen+=Number(m.qty)||0;});}if(q>maxOpen){alert("Zu viel "+inp.dataset.name+". Maximal offen: "+maxOpen+" "+inp.dataset.unit);bad=true;}if(q>0)mats.push({name:inp.dataset.name,unit:inp.dataset.unit,qty:q});});if(bad)return;
+ if(editId){var b=db.billings.find(function(x){return x.id===editId;});b.minutes=mins;b.materials=mats;}else{var nums=db.billings.filter(function(x){return x.projectId===pid;}).map(function(x){return Number(x.number)||0;});db.billings.push({id:uid(),projectId:pid,number:Math.max.apply(null,nums.concat([0]))+1,date:new Date().toLocaleDateString("de-AT"),minutes:mins,materials:mats,entryIds:[]});}
+ save();$("modal").classList.add("hidden");render();show("billing");
+}
+function viewBilling(id){var b=db.billings.find(function(x){return x.id===id;});if(!b)return;alert("Abrechnung "+b.number+"\\n\\nStunden: "+fmt(b.minutes)+"\\nMaterial: "+(b.materials||[]).map(function(m){return m.qty+" "+m.unit+" "+m.name;}).join("\\n"));}
+function deleteBilling(id){if(!confirm("Diese Abrechnung löschen? Die Stunden und Materialien werden dadurch wieder offen."))return;db.billings=db.billings.filter(function(x){return x.id!==id;});save();render();}
+$("projectSelect").onchange=function(){db.projectId=this.value;save();render();};
+$("ovProject").onchange=function(){window.ovP=this.value;renderOverview();};
+$("billProject").onchange=function(){window.billP=this.value;renderBilling();};
+$("addProject").onclick=addProject;
+$("newEntry").onclick=function(){resetEntry();show("entry");};
+$("nHome").onclick=function(){show("home");};$("nEntry").onclick=function(){resetEntry();show("entry");};$("nOverview").onclick=function(){show("overview");};$("nBilling").onclick=function(){show("billing");};$("nSettings").onclick=function(){show("settings");};
+$("homeOverview").onclick=function(){show("overview");};
+$("homeBilling").onclick=function(){show("billing");};
+$("addMat").onclick=function(){addMaterial();};$("addTool").onclick=function(){addTool();};
+$("start").oninput=$("end").oninput=$("pause").oninput=function(){$("calc").textContent=fmt(currentWork());};
+$("saveEntry").onclick=saveEntry;$("cancelEntry").onclick=function(){resetEntry();show("home");};
+$("newBill").onclick=function(){openBillingModal();};$("closeModal").onclick=function(){$("modal").classList.add("hidden");};$("createBill").onclick=createBilling;
+$("saveMaster").onclick=function(){db.materials=$("matMaster").value.split(",").map(function(x){return x.trim();}).filter(Boolean);db.tools=$("toolMaster").value.split(",").map(function(x){return x.trim();}).filter(Boolean);save();render();alert("Gespeichert. Ab jetzt erscheinen die Einträge als Auswahl.");};
+$("exportData").onclick=exportData;
+$("exportExcel").addEventListener("click", function(e){ e.preventDefault(); e.stopPropagation(); exportExcel(); });
+$("importDataBtn").onclick=function(){$("importData").click();};
+$("importData").onchange=function(){if(this.files&&this.files[0])importData(this.files[0]);this.value="";};
+
+$("cloudLogin").onclick=cloudLogin; $("cloudSignup").onclick=cloudSignup; $("cloudLogout").onclick=cloudLogout;
+
+var dl=document.createElement("div");dl.innerHTML='<datalist id="materialList"></datalist><datalist id="toolList"></datalist><datalist id="unitList"><option value="Stk."><option value="kg"><option value="Sack"><option value="m"><option value="m²"><option value="m³"><option value="l"><option value="Stk"></datalist>';document.body.appendChild(dl);
+function refreshLists(){
+ $("materialList").innerHTML=db.materials.map(function(x){return '<option value="'+esc(x)+'">';}).join("");
+ $("toolList").innerHTML=db.tools.map(function(x){return '<option value="'+esc(x)+'">';}).join("");
+}
+
+function exportData(){
+ var payload={app:"Baustellenzeit",version:1,exportedAt:new Date().toISOString(),data:db};
+ var blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+ var url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="baustellenzeit-sicherung-"+new Date().toISOString().slice(0,10)+".json";
+ document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+function excelXmlEscape(v){
+ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+}
+function excelSheetXml(rows){
+ var xml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>';
+ rows.forEach(function(row,ri){
+  xml+='<row r="'+(ri+1)+'">';
+  row.forEach(function(v,ci){
+   var ref='';var n=ci+1;while(n){var rem=(n-1)%26;ref=String.fromCharCode(65+rem)+ref;n=Math.floor((n-1)/26);}ref+=ri+1;
+   if(typeof v==='number' && isFinite(v)) xml+='<c r="'+ref+'"><v>'+v+'</v></c>';
+   else xml+='<c r="'+ref+'" t="inlineStr"><is><t>'+excelXmlEscape(v)+'</t></is></c>';
+  });
+  xml+='</row>';
+ });
+ return xml+'</sheetData><autoFilter ref="A1:'+((rows[0]||['']).length?String.fromCharCode(64+(rows[0]||['']).length):'A')+rows.length+'"/><pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/></worksheet>';
+}
+function crc32(bytes){
+ var table=crc32.table||(crc32.table=(function(){var t=[];for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}return t;})());
+ var c=0xffffffff;for(var i=0;i<bytes.length;i++)c=table[(c^bytes[i])&255]^(c>>>8);return (c^0xffffffff)>>>0;
+}
+function u16(n){return new Uint8Array([n&255,(n>>>8)&255]);}
+function u32(n){return new Uint8Array([n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]);}
+function concatBytes(parts){var len=parts.reduce(function(n,p){return n+p.length;},0),out=new Uint8Array(len),o=0;parts.forEach(function(p){out.set(p,o);o+=p.length;});return out;}
+function makeZip(files){
+ var enc=new TextEncoder(),local=[],central=[],offset=0,now=new Date(),dosTime=(now.getHours()<<11)|(now.getMinutes()<<5)|Math.floor(now.getSeconds()/2),dosDate=((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate();
+ files.forEach(function(f){
+  var name=enc.encode(f.name),data=enc.encode(f.data),crc=crc32(data),head=concatBytes([new Uint8Array([80,75,3,4]),u16(20),u16(0),u16(0),u16(dosTime),u16(dosDate),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),name,data]);
+  local.push(head);
+  central.push(concatBytes([new Uint8Array([80,75,1,2]),u16(20),u16(20),u16(0),u16(0),u16(dosTime),u16(dosDate),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(offset),name]));
+  offset+=head.length;
+ });
+ var cdata=concatBytes(central),ldata=concatBytes(local),end=concatBytes([new Uint8Array([80,75,5,6]),u16(0),u16(0),u16(files.length),u16(files.length),u32(cdata.length),u32(ldata.length),u16(0)]);
+ return concatBytes([ldata,cdata,end]);
+}
+function exportExcel(){
+ try{
+  var projects=[['Baustellen-ID','Baustelle','Erstellt']].concat(db.projects.map(function(p){return [p.id,p.name,p.created_at||''];}));
+  var work=[['Baustelle','Datum','Start','Ende','Pause (min)','Arbeitszeit (h)','Notiz','Material','Werkzeug']];
+  db.entries.slice().sort(function(a,b){return String(a.date).localeCompare(String(b.date));}).forEach(function(e){
+   var p=db.projects.find(function(x){return x.id===e.projectId;});
+   var mats=(e.materials||[]).map(function(m){return m.qty+' '+m.unit+' '+m.name;}).join('; ');
+   var tools=(e.tools||[]).join('; ');
+   work.push([p?p.name:'',e.date,e.start||'',e.end||'',Number(timeToMin(e.pause||'00:00')),Math.round((Number(e.minutes)||0)/60*100)/100,e.note||'',mats,tools]);
+  });
+  var material=[['Baustelle','Material','Einheit','Menge']];
+  db.entries.forEach(function(e){var p=db.projects.find(function(x){return x.id===e.projectId;});(e.materials||[]).forEach(function(m){material.push([p?p.name:'',m.name,m.unit,Number(m.qty)||0]);});});
+  var bills=[['Baustelle','Abrechnung Nr.','Datum','Arbeitszeit (h)','Material','Menge','Einheit']];
+  db.billings.slice().sort(function(a,b){return String(a.date).localeCompare(String(b.date));}).forEach(function(b){var p=db.projects.find(function(x){return x.id===b.projectId;});if((b.materials||[]).length){b.materials.forEach(function(m){bills.push([p?p.name:'',Number(b.number)||0,b.date,Math.round((Number(b.minutes)||0)/60*100)/100,m.name,Number(m.qty)||0,m.unit]);});}else bills.push([p?p.name:'',Number(b.number)||0,b.date,Math.round((Number(b.minutes)||0)/60*100)/100,'','','']);});
+  var summary=[['Baustelle','Gesamtstunden (h)','Abgerechnet (h)','Offen (h)']];
+  db.projects.forEach(function(p){var total=entries(p.id).reduce(function(n,e){return n+Number(e.minutes||0);},0),b=billedHours(p.id);summary.push([p.name,Math.round(total/60*100)/100,Math.round(b/60*100)/100,Math.round((total-b)/60*100)/100]);});
+  var wb='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Übersicht" sheetId="1" r:id="rId1"/><sheet name="Arbeitstage" sheetId="2" r:id="rId2"/><sheet name="Material" sheetId="3" r:id="rId3"/><sheet name="Abrechnungen" sheetId="4" r:id="rId4"/><sheet name="Baustellen" sheetId="5" r:id="rId5"/></sheets></workbook>';
+  var rels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
+  var wbRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet4.xml"/><Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet5.xml"/></Relationships>';
+  var ct='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet4.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet5.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>';
+  var core='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Baustellenzeit Export</dc:title><dc:creator>Baustellenzeit</dc:creator><dc:date>'+new Date().toISOString()+'</dc:date></cp:coreProperties>';
+  var files=[{name:'[Content_Types].xml',data:ct},{name:'_rels/.rels',data:rels},{name:'xl/workbook.xml',data:wb},{name:'xl/_rels/workbook.xml.rels',data:wbRels},{name:'docProps/core.xml',data:core},{name:'xl/worksheets/sheet1.xml',data:excelSheetXml(summary)},{name:'xl/worksheets/sheet2.xml',data:excelSheetXml(work)},{name:'xl/worksheets/sheet3.xml',data:excelSheetXml(material)},{name:'xl/worksheets/sheet4.xml',data:excelSheetXml(bills)},{name:'xl/worksheets/sheet5.xml',data:excelSheetXml(projects)}];
+  var bytes=makeZip(files);
+  var filename='baustellenzeit-export-'+new Date().toISOString().slice(0,10)+'.xlsx';
+  var blob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  var file=new File([blob],filename,{type:blob.type});
+  if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+    navigator.share({title:'Baustellenzeit Excel-Export',files:[file]}).catch(function(err){
+      if(err && err.name==='AbortError') return;
+      downloadBlob(blob,filename);
+    });
+    return;
+  }
+  downloadBlob(blob,filename);
+ }catch(err){
+  alert('Excel-Export konnte nicht erstellt werden.\n\n'+(err&&err.message?err.message:err));
+ }
+}
+function downloadBlob(blob,filename){
+ var url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=filename;a.rel='noopener';a.style.display='none';
+ document.body.appendChild(a);a.click();
+ setTimeout(function(){a.remove();URL.revokeObjectURL(url);},2000);
+}
+
+function importData(file){
+ if(!file)return;
+ var reader=new FileReader();
+ reader.onload=function(){
+  try{
+   var p=JSON.parse(reader.result), incoming=p&&p.data?p.data:p;
+   if(!incoming||!incoming.projects||!incoming.entries)throw new Error("Ungültige Sicherungsdatei");
+   if(!confirm("Die aktuelle App-Datenbank wird durch die Sicherung ersetzt. Fortfahren?"))return;
+   db=incoming;
+   db.projects=db.projects||[];db.entries=db.entries||[];db.billings=db.billings||[];db.materials=db.materials||[];db.tools=db.tools||[];
+   if(!db.projects.length)db.projects=[{id:"p1",name:"Meine Baustelle"}];
+   if(!db.projectId)db.projectId=db.projects[0].id;
+   persistAll();render();show("home");alert("Sicherung erfolgreich wiederhergestellt.");
+  }catch(e){alert("Die Datei konnte nicht wiederhergestellt werden. Bitte eine Baustellenzeit-Sicherung auswählen.");}
+ };
+ reader.readAsText(file);
+}
+var oldRenderMaster=renderMaster;renderMaster=function(){oldRenderMaster();refreshLists();};
+resetEntry();
+function setupUpdates(){
+ if(!('serviceWorker' in navigator))return;
+ navigator.serviceWorker.register('./service-worker.js').then(function(reg){
+  reg.update();
+  reg.addEventListener('updatefound',function(){var w=reg.installing;if(!w)return;w.addEventListener('statechange',function(){if(w.state==='installed'&&navigator.serviceWorker.controller){$("updateModal").classList.remove("hidden");}});});
+  $("doUpdate").onclick=function(){if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'});}else{reg.update();$("doUpdate").textContent="Update wird geladen…";$("doUpdate").disabled=true;}};
+  $("laterUpdate").onclick=function(){$("updateModal").classList.add("hidden");};
+ }).catch(function(e){console.warn('Service Worker',e);});
+ navigator.serviceWorker.addEventListener('controllerchange',function(){if(!window.__reloading){window.__reloading=true;location.reload();}});
+}
+openDataDB(function(){
+ idbRead(function(saved){
+  if(saved){db=saved;normalizeDb();}else{idbWrite(db);normalizeDb();}
+  persistLocalOnly(); render();show("home");
+  initCloud();
+  setupUpdates();
+  setTimeout(function(){$("splash").classList.add("hide");setTimeout(function(){var x=$("splash");if(x)x.remove();},400);},450);
+ });
+});
+})();
+</script>
+</body>
+</html>
