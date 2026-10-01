@@ -50,7 +50,7 @@ nav button{flex:1;background:#f3f4f6;padding:9px 3px;font-size:13px}nav button.a
 <body>
 <div class="splash" id="splash"><div class="splash-inner"><div class="app-logo">🏗️</div><div class="splash-title">Baustellenzeit</div><div class="splash-sub">Stunden · Material · Werkzeug</div></div></div>
 <div class="app">
-<header><div style="display:flex;align-items:center;gap:11px"><div style="font-size:28px">🏗️</div><div><h1>Baustellenzeit</h1><p>Stunden · Material · Werkzeug · Abrechnung</p><div style="font-size:11px;opacity:.45;margin-top:4px">v9.3</div></div></div></header>
+<header><div style="display:flex;align-items:center;gap:11px"><div style="font-size:28px">🏗️</div><div><h1>Baustellenzeit</h1><p>Stunden · Material · Werkzeug · Abrechnung</p><div style="font-size:11px;opacity:.45;margin-top:4px">v9.5</div></div></div></header>
 <main>
 
 <section id="home">
@@ -493,7 +493,7 @@ $("start").oninput=$("end").oninput=$("pause").oninput=function(){$("calc").text
 $("saveEntry").onclick=saveEntry;$("cancelEntry").onclick=function(){resetEntry();show("home");};
 $("newBill").onclick=function(){openBillingModal();};$("closeModal").onclick=function(){$("modal").classList.add("hidden");};$("createBill").onclick=createBilling;
 $("saveMaster").onclick=function(){db.materials=$("matMaster").value.split(",").map(function(x){return x.trim();}).filter(Boolean);db.tools=$("toolMaster").value.split(",").map(function(x){return x.trim();}).filter(Boolean);save();render();alert("Gespeichert. Ab jetzt erscheinen die Einträge als Auswahl.");};
-$("exportData").onclick=exportData;
+$("exportData").onclick=exportData;$("exportExcel").onclick=exportExcel;
 $("importDataBtn").onclick=function(){$("importData").click();};
 $("importData").onchange=function(){if(this.files&&this.files[0])importData(this.files[0]);this.value="";};
 
