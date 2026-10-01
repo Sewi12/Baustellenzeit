@@ -139,7 +139,7 @@ nav button{flex:1;background:#f3f4f6;padding:9px 3px;font-size:13px}nav button.a
 <p class="muted">Sichere deine Baustellen, Arbeitstage, Materialien, Werkzeuge und Abrechnungen als Datei. Die Cloud ist die Hauptspeicherung. Der Export bleibt zusätzlich als unabhängige Sicherung verfügbar.</p>
 <div class="actions">
 <button class="secondary" id="exportData">💾 Daten sichern</button>
-<button class="secondary" id="exportExcel">📊 Excel exportieren</button>
+<button type="button" class="secondary" id="exportExcel">📊 Excel exportieren</button>
 <button class="secondary" id="importDataBtn">Daten wiederherstellen</button>
 </div>
 <input id="importData" type="file" accept=".json,application/json" class="hidden">
@@ -493,7 +493,8 @@ $("start").oninput=$("end").oninput=$("pause").oninput=function(){$("calc").text
 $("saveEntry").onclick=saveEntry;$("cancelEntry").onclick=function(){resetEntry();show("home");};
 $("newBill").onclick=function(){openBillingModal();};$("closeModal").onclick=function(){$("modal").classList.add("hidden");};$("createBill").onclick=createBilling;
 $("saveMaster").onclick=function(){db.materials=$("matMaster").value.split(",").map(function(x){return x.trim();}).filter(Boolean);db.tools=$("toolMaster").value.split(",").map(function(x){return x.trim();}).filter(Boolean);save();render();alert("Gespeichert. Ab jetzt erscheinen die Einträge als Auswahl.");};
-$("exportData").onclick=exportData;$("exportExcel").onclick=exportExcel;
+$("exportData").onclick=exportData;
+$("exportExcel").addEventListener("click", function(e){ e.preventDefault(); e.stopPropagation(); exportExcel(); });
 $("importDataBtn").onclick=function(){$("importData").click();};
 $("importData").onchange=function(){if(this.files&&this.files[0])importData(this.files[0]);this.value="";};
 
@@ -547,28 +548,50 @@ function makeZip(files){
  return concatBytes([ldata,cdata,end]);
 }
 function exportExcel(){
- var projects=[['Baustellen-ID','Baustelle','Erstellt']].concat(db.projects.map(function(p){return [p.id,p.name,p.created_at||''];}));
- var work=[['Baustelle','Datum','Start','Ende','Pause (min)','Arbeitszeit (h)','Notiz','Material','Werkzeug']];
- db.entries.slice().sort(function(a,b){return String(a.date).localeCompare(String(b.date));}).forEach(function(e){
-  var p=db.projects.find(function(x){return x.id===e.projectId;});
-  var mats=(e.materials||[]).map(function(m){return m.qty+' '+m.unit+' '+m.name;}).join('; ');
-  var tools=(e.tools||[]).join('; ');
-  work.push([p?p.name:'',e.date,e.start||'',e.end||'',Number(timeToMin(e.pause||'00:00')),Math.round((Number(e.minutes)||0)/60*100)/100,e.note||'',mats,tools]);
- });
- var material=[['Baustelle','Material','Einheit','Menge']];
- db.entries.forEach(function(e){var p=db.projects.find(function(x){return x.id===e.projectId;});(e.materials||[]).forEach(function(m){material.push([p?p.name:'',m.name,m.unit,Number(m.qty)||0]);});});
- var bills=[['Baustelle','Abrechnung Nr.','Datum','Arbeitszeit (h)','Material','Menge','Einheit']];
- db.billings.slice().sort(function(a,b){return String(a.date).localeCompare(String(b.date));}).forEach(function(b){var p=db.projects.find(function(x){return x.id===b.projectId;});if((b.materials||[]).length){b.materials.forEach(function(m){bills.push([p?p.name:'',Number(b.number)||0,b.date,Math.round((Number(b.minutes)||0)/60*100)/100,m.name,Number(m.qty)||0,m.unit]);});}else bills.push([p?p.name:'',Number(b.number)||0,b.date,Math.round((Number(b.minutes)||0)/60*100)/100,'','','']);});
- var summary=[['Baustelle','Gesamtstunden (h)','Abgerechnet (h)','Offen (h)']];
- db.projects.forEach(function(p){var total=entries(p.id).reduce(function(n,e){return n+Number(e.minutes||0);},0),b=billedHours(p.id);summary.push([p.name,Math.round(total/60*100)/100,Math.round(b/60*100)/100,Math.round((total-b)/60*100)/100]);});
- var wb='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Übersicht" sheetId="1" r:id="rId1"/><sheet name="Arbeitstage" sheetId="2" r:id="rId2"/><sheet name="Material" sheetId="3" r:id="rId3"/><sheet name="Abrechnungen" sheetId="4" r:id="rId4"/><sheet name="Baustellen" sheetId="5" r:id="rId5"/></sheets></workbook>';
- var rels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
- var wbRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet4.xml"/><Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet5.xml"/></Relationships>';
- var ct='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet4.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet5.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>';
- var core='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Baustellenzeit Export</dc:title><dc:creator>Baustellenzeit</dc:creator><dc:date>'+new Date().toISOString()+'</dc:date></cp:coreProperties>';
- var files=[{name:'[Content_Types].xml',data:ct},{name:'_rels/.rels',data:rels},{name:'xl/workbook.xml',data:wb},{name:'xl/_rels/workbook.xml.rels',data:wbRels},{name:'docProps/core.xml',data:core},{name:'xl/worksheets/sheet1.xml',data:excelSheetXml(summary)},{name:'xl/worksheets/sheet2.xml',data:excelSheetXml(work)},{name:'xl/worksheets/sheet3.xml',data:excelSheetXml(material)},{name:'xl/worksheets/sheet4.xml',data:excelSheetXml(bills)},{name:'xl/worksheets/sheet5.xml',data:excelSheetXml(projects)}];
- var bytes=makeZip(files),blob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='baustellenzeit-export-'+new Date().toISOString().slice(0,10)+'.xlsx';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url);},1500);
+ try{
+  var projects=[['Baustellen-ID','Baustelle','Erstellt']].concat(db.projects.map(function(p){return [p.id,p.name,p.created_at||''];}));
+  var work=[['Baustelle','Datum','Start','Ende','Pause (min)','Arbeitszeit (h)','Notiz','Material','Werkzeug']];
+  db.entries.slice().sort(function(a,b){return String(a.date).localeCompare(String(b.date));}).forEach(function(e){
+   var p=db.projects.find(function(x){return x.id===e.projectId;});
+   var mats=(e.materials||[]).map(function(m){return m.qty+' '+m.unit+' '+m.name;}).join('; ');
+   var tools=(e.tools||[]).join('; ');
+   work.push([p?p.name:'',e.date,e.start||'',e.end||'',Number(timeToMin(e.pause||'00:00')),Math.round((Number(e.minutes)||0)/60*100)/100,e.note||'',mats,tools]);
+  });
+  var material=[['Baustelle','Material','Einheit','Menge']];
+  db.entries.forEach(function(e){var p=db.projects.find(function(x){return x.id===e.projectId;});(e.materials||[]).forEach(function(m){material.push([p?p.name:'',m.name,m.unit,Number(m.qty)||0]);});});
+  var bills=[['Baustelle','Abrechnung Nr.','Datum','Arbeitszeit (h)','Material','Menge','Einheit']];
+  db.billings.slice().sort(function(a,b){return String(a.date).localeCompare(String(b.date));}).forEach(function(b){var p=db.projects.find(function(x){return x.id===b.projectId;});if((b.materials||[]).length){b.materials.forEach(function(m){bills.push([p?p.name:'',Number(b.number)||0,b.date,Math.round((Number(b.minutes)||0)/60*100)/100,m.name,Number(m.qty)||0,m.unit]);});}else bills.push([p?p.name:'',Number(b.number)||0,b.date,Math.round((Number(b.minutes)||0)/60*100)/100,'','','']);});
+  var summary=[['Baustelle','Gesamtstunden (h)','Abgerechnet (h)','Offen (h)']];
+  db.projects.forEach(function(p){var total=entries(p.id).reduce(function(n,e){return n+Number(e.minutes||0);},0),b=billedHours(p.id);summary.push([p.name,Math.round(total/60*100)/100,Math.round(b/60*100)/100,Math.round((total-b)/60*100)/100]);});
+  var wb='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Übersicht" sheetId="1" r:id="rId1"/><sheet name="Arbeitstage" sheetId="2" r:id="rId2"/><sheet name="Material" sheetId="3" r:id="rId3"/><sheet name="Abrechnungen" sheetId="4" r:id="rId4"/><sheet name="Baustellen" sheetId="5" r:id="rId5"/></sheets></workbook>';
+  var rels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
+  var wbRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet4.xml"/><Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet5.xml"/></Relationships>';
+  var ct='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet4.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet5.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>';
+  var core='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Baustellenzeit Export</dc:title><dc:creator>Baustellenzeit</dc:creator><dc:date>'+new Date().toISOString()+'</dc:date></cp:coreProperties>';
+  var files=[{name:'[Content_Types].xml',data:ct},{name:'_rels/.rels',data:rels},{name:'xl/workbook.xml',data:wb},{name:'xl/_rels/workbook.xml.rels',data:wbRels},{name:'docProps/core.xml',data:core},{name:'xl/worksheets/sheet1.xml',data:excelSheetXml(summary)},{name:'xl/worksheets/sheet2.xml',data:excelSheetXml(work)},{name:'xl/worksheets/sheet3.xml',data:excelSheetXml(material)},{name:'xl/worksheets/sheet4.xml',data:excelSheetXml(bills)},{name:'xl/worksheets/sheet5.xml',data:excelSheetXml(projects)}];
+  var bytes=makeZip(files);
+  var filename='baustellenzeit-export-'+new Date().toISOString().slice(0,10)+'.xlsx';
+  var blob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  var file=new File([blob],filename,{type:blob.type});
+  if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+    navigator.share({title:'Baustellenzeit Excel-Export',files:[file]}).catch(function(err){
+      if(err && err.name==='AbortError') return;
+      downloadBlob(blob,filename);
+    });
+    return;
+  }
+  downloadBlob(blob,filename);
+ }catch(err){
+  alert('Excel-Export konnte nicht erstellt werden.\n\n'+(err&&err.message?err.message:err));
+ }
 }
+function downloadBlob(blob,filename){
+ var url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=filename;a.rel='noopener';a.style.display='none';
+ document.body.appendChild(a);a.click();
+ setTimeout(function(){a.remove();URL.revokeObjectURL(url);},2000);
+}
+
 function importData(file){
  if(!file)return;
  var reader=new FileReader();
