@@ -138,7 +138,8 @@ nav button{flex:1;background:#f3f4f6;padding:9px 3px;font-size:13px}nav button.a
 <h2 style="margin-top:0">💾 Datensicherung</h2>
 <p class="muted">Sichere deine Baustellen, Arbeitstage, Materialien, Werkzeuge und Abrechnungen als Datei. Die Cloud ist die Hauptspeicherung. Der Export bleibt zusätzlich als unabhängige Sicherung verfügbar.</p>
 <div class="actions">
-<button class="secondary" id="exportData">Daten sichern</button>
+<button class="secondary" id="exportData">💾 Daten sichern</button>
+<button class="secondary" id="exportExcel">📊 Excel exportieren</button>
 <button class="secondary" id="importDataBtn">Daten wiederherstellen</button>
 </div>
 <input id="importData" type="file" accept=".json,application/json" class="hidden">
@@ -510,6 +511,63 @@ function exportData(){
  var url=URL.createObjectURL(blob),a=document.createElement("a");
  a.href=url;a.download="baustellenzeit-sicherung-"+new Date().toISOString().slice(0,10)+".json";
  document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+function excelXmlEscape(v){
+ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+}
+function excelSheetXml(rows){
+ var xml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>';
+ rows.forEach(function(row,ri){
+  xml+='<row r="'+(ri+1)+'">';
+  row.forEach(function(v,ci){
+   var ref='';var n=ci+1;while(n){var rem=(n-1)%26;ref=String.fromCharCode(65+rem)+ref;n=Math.floor((n-1)/26);}ref+=ri+1;
+   if(typeof v==='number' && isFinite(v)) xml+='<c r="'+ref+'"><v>'+v+'</v></c>';
+   else xml+='<c r="'+ref+'" t="inlineStr"><is><t>'+excelXmlEscape(v)+'</t></is></c>';
+  });
+  xml+='</row>';
+ });
+ return xml+'</sheetData><autoFilter ref="A1:'+((rows[0]||['']).length?String.fromCharCode(64+(rows[0]||['']).length):'A')+rows.length+'"/><pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/></worksheet>';
+}
+function crc32(bytes){
+ var table=crc32.table||(crc32.table=(function(){var t=[];for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}return t;})());
+ var c=0xffffffff;for(var i=0;i<bytes.length;i++)c=table[(c^bytes[i])&255]^(c>>>8);return (c^0xffffffff)>>>0;
+}
+function u16(n){return new Uint8Array([n&255,(n>>>8)&255]);}
+function u32(n){return new Uint8Array([n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]);}
+function concatBytes(parts){var len=parts.reduce(function(n,p){return n+p.length;},0),out=new Uint8Array(len),o=0;parts.forEach(function(p){out.set(p,o);o+=p.length;});return out;}
+function makeZip(files){
+ var enc=new TextEncoder(),local=[],central=[],offset=0,now=new Date(),dosTime=(now.getHours()<<11)|(now.getMinutes()<<5)|Math.floor(now.getSeconds()/2),dosDate=((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate();
+ files.forEach(function(f){
+  var name=enc.encode(f.name),data=enc.encode(f.data),crc=crc32(data),head=concatBytes([new Uint8Array([80,75,3,4]),u16(20),u16(0),u16(0),u16(dosTime),u16(dosDate),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),name,data]);
+  local.push(head);
+  central.push(concatBytes([new Uint8Array([80,75,1,2]),u16(20),u16(20),u16(0),u16(0),u16(dosTime),u16(dosDate),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(offset),name]));
+  offset+=head.length;
+ });
+ var cdata=concatBytes(central),ldata=concatBytes(local),end=concatBytes([new Uint8Array([80,75,5,6]),u16(0),u16(0),u16(files.length),u16(files.length),u32(cdata.length),u32(ldata.length),u16(0)]);
+ return concatBytes([ldata,cdata,end]);
+}
+function exportExcel(){
+ var projects=[['Baustellen-ID','Baustelle','Erstellt']].concat(db.projects.map(function(p){return [p.id,p.name,p.created_at||''];}));
+ var work=[['Baustelle','Datum','Start','Ende','Pause (min)','Arbeitszeit (h)','Notiz','Material','Werkzeug']];
+ db.entries.slice().sort(function(a,b){return String(a.date).localeCompare(String(b.date));}).forEach(function(e){
+  var p=db.projects.find(function(x){return x.id===e.projectId;});
+  var mats=(e.materials||[]).map(function(m){return m.qty+' '+m.unit+' '+m.name;}).join('; ');
+  var tools=(e.tools||[]).join('; ');
+  work.push([p?p.name:'',e.date,e.start||'',e.end||'',Number(timeToMin(e.pause||'00:00')),Math.round((Number(e.minutes)||0)/60*100)/100,e.note||'',mats,tools]);
+ });
+ var material=[['Baustelle','Material','Einheit','Menge']];
+ db.entries.forEach(function(e){var p=db.projects.find(function(x){return x.id===e.projectId;});(e.materials||[]).forEach(function(m){material.push([p?p.name:'',m.name,m.unit,Number(m.qty)||0]);});});
+ var bills=[['Baustelle','Abrechnung Nr.','Datum','Arbeitszeit (h)','Material','Menge','Einheit']];
+ db.billings.slice().sort(function(a,b){return String(a.date).localeCompare(String(b.date));}).forEach(function(b){var p=db.projects.find(function(x){return x.id===b.projectId;});if((b.materials||[]).length){b.materials.forEach(function(m){bills.push([p?p.name:'',Number(b.number)||0,b.date,Math.round((Number(b.minutes)||0)/60*100)/100,m.name,Number(m.qty)||0,m.unit]);});}else bills.push([p?p.name:'',Number(b.number)||0,b.date,Math.round((Number(b.minutes)||0)/60*100)/100,'','','']);});
+ var summary=[['Baustelle','Gesamtstunden (h)','Abgerechnet (h)','Offen (h)']];
+ db.projects.forEach(function(p){var total=entries(p.id).reduce(function(n,e){return n+Number(e.minutes||0);},0),b=billedHours(p.id);summary.push([p.name,Math.round(total/60*100)/100,Math.round(b/60*100)/100,Math.round((total-b)/60*100)/100]);});
+ var wb='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Übersicht" sheetId="1" r:id="rId1"/><sheet name="Arbeitstage" sheetId="2" r:id="rId2"/><sheet name="Material" sheetId="3" r:id="rId3"/><sheet name="Abrechnungen" sheetId="4" r:id="rId4"/><sheet name="Baustellen" sheetId="5" r:id="rId5"/></sheets></workbook>';
+ var rels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>';
+ var wbRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet4.xml"/><Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet5.xml"/></Relationships>';
+ var ct='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet4.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet5.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>';
+ var core='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Baustellenzeit Export</dc:title><dc:creator>Baustellenzeit</dc:creator><dc:date>'+new Date().toISOString()+'</dc:date></cp:coreProperties>';
+ var files=[{name:'[Content_Types].xml',data:ct},{name:'_rels/.rels',data:rels},{name:'xl/workbook.xml',data:wb},{name:'xl/_rels/workbook.xml.rels',data:wbRels},{name:'docProps/core.xml',data:core},{name:'xl/worksheets/sheet1.xml',data:excelSheetXml(summary)},{name:'xl/worksheets/sheet2.xml',data:excelSheetXml(work)},{name:'xl/worksheets/sheet3.xml',data:excelSheetXml(material)},{name:'xl/worksheets/sheet4.xml',data:excelSheetXml(bills)},{name:'xl/worksheets/sheet5.xml',data:excelSheetXml(projects)}];
+ var bytes=makeZip(files),blob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='baustellenzeit-export-'+new Date().toISOString().slice(0,10)+'.xlsx';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url);},1500);
 }
 function importData(file){
  if(!file)return;
